@@ -53,7 +53,7 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 #endif
 
 #if NET7_0_OR_GREATER
-	public IDirectoryInfo? CreateTempSubdirectory(string? prefix = null) =>
+	public IDirectoryInfo CreateTempSubdirectory(string? prefix = null) =>
 		inner.CreateTempSubdirectory(prefix);
 #endif
 
@@ -318,7 +318,7 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 
 	public string[] GetLogicalDrives() => inner.GetLogicalDrives();
 
-	public string? GetDirectoryRoot(string path) => inner.GetDirectoryRoot(path);
+	public string GetDirectoryRoot(string path) => inner.GetDirectoryRoot(path);
 
 	public IDirectoryInfo? GetParent(string path) => inner.GetParent(path);
 
