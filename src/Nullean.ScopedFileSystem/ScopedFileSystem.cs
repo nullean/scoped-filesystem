@@ -13,8 +13,9 @@ namespace Nullean.ScopedFileSystem;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Pass one or more absolute or relative directory paths as <c>scopeRoots</c>. Each path is resolved
-/// to an absolute, canonical form via <see cref="IPath.GetFullPath(string)"/>.
+/// The recommended entry point is <see cref="ScopedFileSystem(ScopedFileSystemOptions)"/>, which gives
+/// access to the full configuration surface including hidden-path allowlists and special-folder permissions.
+/// Two convenience overloads are also provided for the common case of a single scope root.
 /// </para>
 /// <para>
 /// <b>Root disjointness:</b> no root may be an ancestor of another root. If roots overlap
@@ -25,11 +26,36 @@ namespace Nullean.ScopedFileSystem;
 public class ScopedFileSystem : IFileSystem
 {
 	private readonly IFileSystem _inner;
-	private readonly IReadOnlyList<string> _scopeRoots;
+
+	/// <summary>
+	/// Initialises a <see cref="ScopedFileSystem"/> from a fully configured
+	/// <see cref="ScopedFileSystemOptions"/> instance.
+	/// </summary>
+	public ScopedFileSystem(ScopedFileSystemOptions options)
+	{
+		_inner = options.Inner;
+
+		var normalized = options.ScopeRoots
+			.Select(r => _inner.Path.GetFullPath(r)
+				.TrimEnd(_inner.Path.DirectorySeparatorChar, _inner.Path.AltDirectorySeparatorChar))
+			.ToArray();
+
+		PathValidator.ValidateRootsAreDisjoint(normalized, _inner);
+
+		var ctx = new ValidationContext(
+			NormalizedRoots: normalized,
+			ResolvedSpecialFolderPaths: ValidationContext.ResolveSpecialFolderPaths(options.AllowedSpecialFolders),
+			AllowedHiddenFileNames: options.AllowedHiddenFileNames,
+			AllowedHiddenFolderNames: options.AllowedHiddenFolderNames
+		);
+
+		File = new ScopedFile(_inner.File, _inner, ctx);
+		FileInfo = new ScopedFileInfoFactory(_inner.FileInfo, _inner, ctx);
+	}
 
 	/// <summary>Initialises a scoped filesystem rooted at <paramref name="scopeRoot"/>.</summary>
 	public ScopedFileSystem(IFileSystem inner, IDirectoryInfo scopeRoot)
-		: this(inner, scopeRoot.FullName) { }
+		: this(new ScopedFileSystemOptions(scopeRoot.FullName) { Inner = inner }) { }
 
 	/// <summary>
 	/// Initializes a new <see cref="ScopedFileSystem"/>.
@@ -44,23 +70,7 @@ public class ScopedFileSystem : IFileSystem
 	/// Thrown when fewer than one root is supplied, or when any root is an ancestor of another root.
 	/// </exception>
 	public ScopedFileSystem(IFileSystem inner, params string[] scopeRoots)
-	{
-		if (scopeRoots is null || scopeRoots.Length == 0)
-			throw new ArgumentException("At least one scope root must be provided.", nameof(scopeRoots));
-
-		_inner = inner;
-
-		var normalized = scopeRoots
-			.Select(r => _inner.Path.GetFullPath(r)
-				.TrimEnd(_inner.Path.DirectorySeparatorChar, _inner.Path.AltDirectorySeparatorChar))
-			.ToArray();
-
-		PathValidator.ValidateRootsAreDisjoint(normalized, _inner);
-
-		_scopeRoots = normalized;
-		File = new ScopedFile(_inner.File, _inner, _scopeRoots);
-		FileInfo = new ScopedFileInfoFactory(_inner.FileInfo, _inner, _scopeRoots);
-	}
+		: this(new ScopedFileSystemOptions(scopeRoots) { Inner = inner }) { }
 
 	public IFile File { get; }
 	public IFileInfoFactory FileInfo { get; }

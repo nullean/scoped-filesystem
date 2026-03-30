@@ -6,7 +6,7 @@ using System.IO.Abstractions;
 
 namespace Nullean.ScopedFileSystem;
 
-/// <summary>Shared path validation logic for scope and symlink enforcement.</summary>
+/// <summary>Shared path validation logic for scope, symlink, and hidden-path enforcement.</summary>
 internal static class PathValidator
 {
 	private static StringComparison Comparison =>
@@ -38,30 +38,51 @@ internal static class PathValidator
 	}
 
 	/// <summary>
-	/// Returns true when <paramref name="path"/> is within any of the <paramref name="scopeRoots"/>,
-	/// without throwing. Used by <c>Exists</c> to silently return false for out-of-scope paths.
+	/// Returns true when <paramref name="path"/> is within any of the scope roots or allowed special
+	/// folder paths in <paramref name="ctx"/>, without throwing.
+	/// Used by <c>Exists</c> to silently return false for out-of-scope paths.
 	/// </summary>
-	internal static bool IsInScope(string path, IReadOnlyList<string> scopeRoots, IFileSystem inner)
+	internal static bool IsInScope(string path, ValidationContext ctx, IFileSystem inner)
 	{
 		var fullPath = inner.Path.GetFullPath(path);
-		return scopeRoots.Any(root => IsWithinRoot(fullPath, root, inner));
+		return ctx.NormalizedRoots.Any(root => IsWithinRoot(fullPath, root, inner))
+			|| ctx.ResolvedSpecialFolderPaths.Any(sf => IsWithinRoot(fullPath, sf, inner));
 	}
 
 	/// <summary>
-	/// Validates that <paramref name="path"/> is within one of the <paramref name="scopeRoots"/>,
-	/// is not a symlink, and has no symlinked or hidden ancestors between the file and the matched scope root.
+	/// Validates that <paramref name="path"/> is permitted:
+	/// <list type="bullet">
+	///   <item>Paths within a resolved special folder bypass all other checks.</item>
+	///   <item>Otherwise, the path must be within one of the scope roots, the target file must not
+	///   be hidden (unless in <see cref="ValidationContext.AllowedHiddenFileNames"/>), and no ancestor
+	///   directory up to the matched root may be hidden (unless in
+	///   <see cref="ValidationContext.AllowedHiddenFolderNames"/>) or a symlink.</item>
+	/// </list>
 	/// Throws <see cref="ScopedFileSystemException"/> on any violation.
 	/// </summary>
-	internal static void ValidatePath(string path, IReadOnlyList<string> scopeRoots, IFileSystem inner)
+	internal static void ValidatePath(string path, ValidationContext ctx, IFileSystem inner)
 	{
 		var fullPath = inner.Path.GetFullPath(path);
 
-		var matchedRoot = scopeRoots.FirstOrDefault(root => IsWithinRoot(fullPath, root, inner));
+		// Special folder bypass: full access with no further checks
+		if (ctx.ResolvedSpecialFolderPaths.Any(sf => IsWithinRoot(fullPath, sf, inner)))
+			return;
+
+		var matchedRoot = ctx.NormalizedRoots.FirstOrDefault(root => IsWithinRoot(fullPath, root, inner));
 		if (matchedRoot is null)
 			throw new ScopedFileSystemException(
 				$"Access denied: '{path}' resolves to '{fullPath}' which is outside all configured scope roots.");
 
-		ValidateAncestors(fullPath, matchedRoot, inner);
+		// Hidden file check: block files whose own name starts with '.' unless explicitly allowed
+		var fileName = inner.Path.GetFileName(fullPath);
+		if (!string.IsNullOrEmpty(fileName)
+			&& fileName.StartsWith('.')
+			&& !ctx.AllowedHiddenFileNames.Contains(fileName))
+			throw new ScopedFileSystemException(
+				$"Access denied: '{fileName}' is a hidden file. " +
+				$"Add '{fileName}' to {nameof(ScopedFileSystemOptions.AllowedHiddenFileNames)} to permit access.");
+
+		ValidateAncestors(fullPath, matchedRoot, ctx.AllowedHiddenFolderNames, inner);
 	}
 
 	/// <summary>
@@ -109,13 +130,19 @@ internal static class PathValidator
 
 	/// <summary>
 	/// Validates that <paramref name="fullPath"/> is not a symlink and that no ancestor directory
-	/// up to <paramref name="scopeRoot"/> is a symlink or hidden, using <see cref="FileSystemExtensions.TryValidateSymlinkAccess"/>.
+	/// up to <paramref name="scopeRoot"/> is a symlink or hidden (unless its name is in
+	/// <paramref name="allowedHiddenFolderNames"/>), using
+	/// <see cref="FileSystemExtensions.TryValidateSymlinkAccess"/>.
 	/// </summary>
-	private static void ValidateAncestors(string fullPath, string scopeRoot, IFileSystem inner)
+	private static void ValidateAncestors(
+		string fullPath,
+		string scopeRoot,
+		IReadOnlySet<string> allowedHiddenFolderNames,
+		IFileSystem inner)
 	{
 		var fileInfo = inner.FileInfo.New(fullPath);
 		var rootInfo = inner.DirectoryInfo.New(scopeRoot);
-		if (!fileInfo.TryValidateSymlinkAccess(rootInfo, out var error))
+		if (!fileInfo.TryValidateSymlinkAccess(rootInfo, allowedHiddenFolderNames, out var error))
 			throw new ScopedFileSystemException($"Access denied: {error}.");
 	}
 }
