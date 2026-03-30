@@ -2,6 +2,8 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using System;
+
 namespace Nullean.ScopedFileSystem;
 
 /// <summary>
@@ -24,8 +26,8 @@ public enum AllowedSpecialFolder
 	/// <summary>
 	/// The system temporary directory.
 	/// Resolved via <see cref="System.IO.Path.GetTempPath"/>.
-	/// macOS: <c>/var/folders/…</c> or <c>/tmp</c> &nbsp;|&nbsp;
-	/// Windows: <c>%TEMP%</c> &nbsp;|&nbsp;
+	/// macOS: <c>/var/folders/…</c> or <c>/tmp</c> |
+	/// Windows: <c>%TEMP%</c> |
 	/// Linux: <c>/tmp</c>
 	/// </summary>
 	Temp = 1 << 0,
@@ -33,17 +35,18 @@ public enum AllowedSpecialFolder
 	/// <summary>
 	/// Roaming user-specific application data.
 	/// Resolved via <see cref="Environment.SpecialFolder.ApplicationData"/>.
-	/// macOS: <c>~/Library/Application Support</c> &nbsp;|&nbsp;
-	/// Windows: <c>%APPDATA%</c> &nbsp;|&nbsp;
+	/// macOS: <c>~/Library/Application Support</c> |
+	/// Windows: <c>%APPDATA%</c> |
 	/// Linux: <c>~/.config</c>
 	/// </summary>
+	///
 	ApplicationData = 1 << 1,
 
 	/// <summary>
 	/// Local (non-roaming) user-specific application data.
 	/// Resolved via <see cref="Environment.SpecialFolder.LocalApplicationData"/>.
-	/// macOS: <c>~/Library/Application Support</c> &nbsp;|&nbsp;
-	/// Windows: <c>%LOCALAPPDATA%</c> &nbsp;|&nbsp;
+	/// macOS: <c>~/Library/Application Support</c> |
+	/// Windows: <c>%LOCALAPPDATA%</c> |
 	/// Linux: <c>~/.local/share</c>
 	/// </summary>
 	LocalApplicationData = 1 << 2,
@@ -51,8 +54,8 @@ public enum AllowedSpecialFolder
 	/// <summary>
 	/// Machine-wide application data shared across all users.
 	/// Resolved via <see cref="Environment.SpecialFolder.CommonApplicationData"/>.
-	/// macOS: <c>/Library/Application Support</c> &nbsp;|&nbsp;
-	/// Windows: <c>C:\ProgramData</c> &nbsp;|&nbsp;
+	/// macOS: <c>/Library/Application Support</c> |
+	/// Windows: <c>C:\ProgramData</c> |
 	/// Linux: <c>/usr/share</c>
 	/// </summary>
 	CommonApplicationData = 1 << 3,

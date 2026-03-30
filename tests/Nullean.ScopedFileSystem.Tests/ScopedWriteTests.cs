@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using AwesomeAssertions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -16,7 +17,7 @@ public class ScopedWriteTests
 
 		scoped.File.WriteAllText("/docs/new.txt", "content");
 
-		Assert.Equal("content", mockFs.File.ReadAllText("/docs/new.txt"));
+		mockFs.File.ReadAllText("/docs/new.txt").Should().Be("content");
 	}
 
 	[Fact]
@@ -24,7 +25,8 @@ public class ScopedWriteTests
 	{
 		var (_, scoped) = Setup.Create("/docs");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.WriteAllText("/etc/new.txt", "content"));
+		var act = () => scoped.File.WriteAllText("/etc/new.txt", "content");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -33,7 +35,8 @@ public class ScopedWriteTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddDirectory("/etc");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.AppendAllText("/etc/log.txt", "entry"));
+		var act = () => scoped.File.AppendAllText("/etc/log.txt", "entry");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -44,7 +47,7 @@ public class ScopedWriteTests
 
 		scoped.File.AppendAllText("/docs/log.txt", "second");
 
-		Assert.Contains("second", mockFs.File.ReadAllText("/docs/log.txt"));
+		mockFs.File.ReadAllText("/docs/log.txt").Should().Contain("second");
 	}
 
 	[Fact]
@@ -53,7 +56,8 @@ public class ScopedWriteTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/target.txt", new MockFileData("data"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.Delete("/etc/target.txt"));
+		var act = () => scoped.File.Delete("/etc/target.txt");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -64,7 +68,7 @@ public class ScopedWriteTests
 
 		scoped.File.Delete("/docs/deleteme.txt");
 
-		Assert.False(mockFs.File.Exists("/docs/deleteme.txt"));
+		mockFs.File.Exists("/docs/deleteme.txt").Should().BeFalse();
 	}
 
 	[Fact]
@@ -73,7 +77,8 @@ public class ScopedWriteTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/source.txt", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.Copy("/etc/source.txt", "/docs/dest.txt"));
+		var act = () => scoped.File.Copy("/etc/source.txt", "/docs/dest.txt");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -83,7 +88,8 @@ public class ScopedWriteTests
 		mockFs.AddFile("/docs/source.txt", new MockFileData("data"));
 		mockFs.AddDirectory("/etc");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.Copy("/docs/source.txt", "/etc/dest.txt"));
+		var act = () => scoped.File.Copy("/docs/source.txt", "/etc/dest.txt");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -92,7 +98,8 @@ public class ScopedWriteTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/source.txt", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.Move("/etc/source.txt", "/docs/dest.txt"));
+		var act = () => scoped.File.Move("/etc/source.txt", "/docs/dest.txt");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -102,7 +109,8 @@ public class ScopedWriteTests
 		mockFs.AddFile("/docs/source.txt", new MockFileData("data"));
 		mockFs.AddDirectory("/etc");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.Move("/docs/source.txt", "/etc/dest.txt"));
+		var act = () => scoped.File.Move("/docs/source.txt", "/etc/dest.txt");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -110,7 +118,8 @@ public class ScopedWriteTests
 	{
 		var (_, scoped) = Setup.Create("/docs");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.Create("/etc/new.txt"));
+		var act = () => scoped.File.Create("/etc/new.txt");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -119,7 +128,8 @@ public class ScopedWriteTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/existing.txt", new MockFileData("data"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.OpenWrite("/etc/existing.txt"));
+		var act = () => scoped.File.OpenWrite("/etc/existing.txt");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -127,8 +137,8 @@ public class ScopedWriteTests
 	{
 		var (_, scoped) = Setup.Create("/docs");
 
-		await Assert.ThrowsAsync<ScopedFileSystemException>(
-			() => scoped.File.WriteAllTextAsync("/etc/new.txt", "content"));
+		var act = async () => await scoped.File.WriteAllTextAsync("/etc/new.txt", "content");
+		await act.Should().ThrowAsync<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -136,8 +146,8 @@ public class ScopedWriteTests
 	{
 		var (_, scoped) = Setup.Create("/docs");
 
-		await Assert.ThrowsAsync<ScopedFileSystemException>(
-			() => scoped.File.AppendAllBytesAsync("/etc/new.txt", new byte[] { 1, 2, 3 }));
+		var act = async () => await scoped.File.AppendAllBytesAsync("/etc/new.txt", new byte[] { 1, 2, 3 });
+		await act.Should().ThrowAsync<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -147,8 +157,8 @@ public class ScopedWriteTests
 		mockFs.AddFile("/docs/source.txt", new MockFileData("new"));
 		mockFs.AddDirectory("/etc");
 
-		Assert.Throws<ScopedFileSystemException>(() =>
-			scoped.File.Replace("/docs/source.txt", "/etc/dest.txt", null));
+		var act = () => scoped.File.Replace("/docs/source.txt", "/etc/dest.txt", null);
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -157,7 +167,7 @@ public class ScopedWriteTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/file.txt", new MockFileData("data"));
 
-		Assert.Throws<ScopedFileSystemException>(() =>
-			scoped.File.SetAttributes("/etc/file.txt", FileAttributes.ReadOnly));
+		var act = () => scoped.File.SetAttributes("/etc/file.txt", FileAttributes.ReadOnly);
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 }
