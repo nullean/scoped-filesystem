@@ -5,7 +5,7 @@ open System.IO
 
 let ToolName = "Nullean.ScopedFileSystem"
 let Repository = "nullean/scoped-filesystem"
-let MainTFM = "netstandard2.0"
+let MainTFM = "net9.0"
 let SignKey = "96c599bbe3e70f5d"
 
 let ValidateAssemblyName = true
