@@ -16,6 +16,22 @@ internal sealed record ValidationContext(
 	IReadOnlySet<string> AllowedHiddenFolderNames
 )
 {
+	/// <summary>
+	/// Converts a caller-supplied allow-list into an internal set using the platform-appropriate
+	/// string comparer (ordinal on case-sensitive filesystems, ordinal-ignore-case elsewhere).
+	/// </summary>
+	internal static IReadOnlySet<string> ToAllowSet(IReadOnlyCollection<string> names)
+	{
+		var comparer = FileSystemPlatform.IsCaseSensitiveFileSystem
+			? StringComparer.Ordinal
+			: StringComparer.OrdinalIgnoreCase;
+#if NETSTANDARD2_0 || NETSTANDARD2_1
+		return new ReadOnlySetWrapper<string>(names, comparer);
+#else
+		return new HashSet<string>(names, comparer);
+#endif
+	}
+
 	/// <summary>Resolves the <see cref="AllowedSpecialFolder"/> flags to normalized absolute paths.</summary>
 	internal static IReadOnlyList<string> ResolveSpecialFolderPaths(AllowedSpecialFolder flags)
 	{
