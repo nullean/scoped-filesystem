@@ -43,7 +43,11 @@ public static class FileSystemExtensions
         IDirectoryInfo docRoot,
         [NotNullWhen(false)] out string? error)
     {
+#if NET6_0_OR_GREATER
         if (file.Exists && file.LinkTarget != null)
+#else
+        if (file.Exists && new System.IO.FileInfo(file.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+#endif
         {
             error = "path must not point to a symlink";
             return false;
@@ -56,12 +60,16 @@ public static class FileSystemExtensions
         var dir = file.Directory;
         while (dir != null && !string.Equals(dir.FullName, docRoot.FullName, cmp))
         {
-            if (dir.Name.StartsWith('.'))
+            if (dir.Name.StartsWith("."))
             {
                 error = "path must not traverse hidden directories";
                 return false;
             }
+#if NET6_0_OR_GREATER
             if (dir.Exists && dir.LinkTarget != null)
+#else
+            if (dir.Exists && new System.IO.DirectoryInfo(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+#endif
             {
                 error = "path must not traverse symlinked directories";
                 return false;
