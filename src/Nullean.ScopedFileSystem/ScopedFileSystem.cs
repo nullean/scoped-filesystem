@@ -7,47 +7,68 @@ using System.IO.Abstractions;
 namespace Nullean.ScopedFileSystem;
 
 /// <summary>
-/// An <see cref="IFileSystem"/> decorator that restricts file read and write operations to one or more
-/// configured scope directories and rejects symbolic links. All directory operations pass through
-/// to the inner filesystem without restriction.
+/// An <see cref="IFileSystem"/> decorator that restricts file and directory read and write operations
+/// to one or more configured scope directories and rejects symbolic links and hidden paths.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Pass one or more absolute or relative directory paths as <c>scopeRoots</c>. Each path is resolved
-/// to an absolute, canonical form via <see cref="IPath.GetFullPath(string)"/>.
+/// For full configuration (hidden-path allowlists, special-folder permissions) use
+/// <see cref="ScopedFileSystem(IFileSystem,ScopedFileSystemOptions)"/> or
+/// <see cref="ScopedFileSystem(ScopedFileSystemOptions)"/>.
+/// Convenience overloads are provided for the common single-root case.
 /// </para>
 /// <para>
-/// <b>Root disjointness:</b> no root may be an ancestor of another root. If roots overlap
-/// (e.g. <c>/data</c> and <c>/data/sub</c>) an <see cref="ArgumentException"/> is thrown at
-/// construction time. Nested roots create ambiguous policy boundaries and are therefore forbidden.
+/// <b>Root disjointness:</b> no root may be an ancestor of another. Nested roots throw
+/// <see cref="ArgumentException"/> at construction time.
 /// </para>
 /// </remarks>
 public class ScopedFileSystem : IFileSystem
 {
 	private readonly IFileSystem _inner;
-	private readonly IReadOnlyList<string> _scopeRoots;
+
+	// ── Full-options constructors ─────────────────────────────────────────────
+
+	/// <summary>
+	/// Initialises a <see cref="ScopedFileSystem"/> with an explicit inner filesystem and full options.
+	/// </summary>
+	public ScopedFileSystem(IFileSystem inner, ScopedFileSystemOptions options)
+		: this(inner, options.ScopeRoots, options.AllowedHiddenFileNames, options.AllowedHiddenFolderNames, options.AllowedSpecialFolders) { }
+
+	/// <summary>
+	/// Initialises a <see cref="ScopedFileSystem"/> using <see cref="FileSystem"/> as the inner filesystem.
+	/// </summary>
+	public ScopedFileSystem(ScopedFileSystemOptions options)
+		: this(new FileSystem(), options) { }
+
+	// ── Convenience overloads ─────────────────────────────────────────────────
 
 	/// <summary>Initialises a scoped filesystem rooted at <paramref name="scopeRoot"/>.</summary>
 	public ScopedFileSystem(IFileSystem inner, IDirectoryInfo scopeRoot)
-		: this(inner, scopeRoot.FullName) { }
+		: this(inner, new ScopedFileSystemOptions(scopeRoot.FullName)) { }
 
-	/// <summary>
-	/// Initializes a new <see cref="ScopedFileSystem"/>.
-	/// </summary>
-	/// <param name="inner">The underlying <see cref="IFileSystem"/> to wrap.</param>
-	/// <param name="scopeRoots">
-	/// One or more directory paths that define the allowed scope for file read and write operations.
-	/// Each path is normalised to an absolute, canonical path via <see cref="IPath.GetFullPath(string)"/>.
-	/// No root may be an ancestor of another; doing so throws <see cref="ArgumentException"/>.
-	/// </param>
-	/// <exception cref="ArgumentException">
-	/// Thrown when fewer than one root is supplied, or when any root is an ancestor of another root.
-	/// </exception>
+	/// <summary>Initialises a scoped filesystem rooted at <paramref name="scopeRoot"/> using the real filesystem.</summary>
+	public ScopedFileSystem(IDirectoryInfo scopeRoot)
+		: this(new FileSystem(), scopeRoot) { }
+
+	/// <summary>Initialises a scoped filesystem with one or more explicit scope roots.</summary>
+	/// <exception cref="ArgumentException">Thrown when fewer than one root is supplied or any root is an ancestor of another.</exception>
 	public ScopedFileSystem(IFileSystem inner, params string[] scopeRoots)
-	{
-		if (scopeRoots is null || scopeRoots.Length == 0)
-			throw new ArgumentException("At least one scope root must be provided.", nameof(scopeRoots));
+		: this(inner, new ScopedFileSystemOptions(scopeRoots)) { }
 
+	/// <summary>Initialises a scoped filesystem with one or more scope roots using the real filesystem.</summary>
+	/// <exception cref="ArgumentException">Thrown when fewer than one root is supplied or any root is an ancestor of another.</exception>
+	public ScopedFileSystem(params string[] scopeRoots)
+		: this(new FileSystem(), scopeRoots) { }
+
+	// ── Core constructor ──────────────────────────────────────────────────────
+
+	private ScopedFileSystem(
+		IFileSystem inner,
+		IReadOnlyList<string> scopeRoots,
+		IReadOnlySet<string> allowedHiddenFileNames,
+		IReadOnlySet<string> allowedHiddenFolderNames,
+		AllowedSpecialFolder allowedSpecialFolders)
+	{
 		_inner = inner;
 
 		var normalized = scopeRoots
@@ -57,19 +78,27 @@ public class ScopedFileSystem : IFileSystem
 
 		PathValidator.ValidateRootsAreDisjoint(normalized, _inner);
 
-		_scopeRoots = normalized;
-		File = new ScopedFile(_inner.File, _inner, _scopeRoots);
-		FileInfo = new ScopedFileInfoFactory(_inner.FileInfo, _inner, _scopeRoots);
+		var ctx = new ValidationContext(
+			NormalizedRoots: normalized,
+			ResolvedSpecialFolderPaths: ValidationContext.ResolveSpecialFolderPaths(allowedSpecialFolders),
+			AllowedHiddenFileNames: allowedHiddenFileNames,
+			AllowedHiddenFolderNames: allowedHiddenFolderNames
+		);
+
+		File = new ScopedFile(_inner.File, _inner, ctx);
+		FileInfo = new ScopedFileInfoFactory(_inner.FileInfo, _inner, ctx);
+		Directory = new ScopedDirectory(_inner.Directory, _inner, ctx);
+		DirectoryInfo = new ScopedDirectoryInfoFactory(_inner.DirectoryInfo, _inner, ctx);
 	}
 
 	public IFile File { get; }
 	public IFileInfoFactory FileInfo { get; }
+	public IDirectory Directory { get; }
+	public IDirectoryInfoFactory DirectoryInfo { get; }
 
 	// ── Pass-through ──────────────────────────────────────────────────────────
 
-	public IDirectory Directory => _inner.Directory;
 	public IPath Path => _inner.Path;
-	public IDirectoryInfoFactory DirectoryInfo => _inner.DirectoryInfo;
 	public IDriveInfoFactory DriveInfo => _inner.DriveInfo;
 	public IFileStreamFactory FileStream => _inner.FileStream;
 	public IFileSystemWatcherFactory FileSystemWatcher => _inner.FileSystemWatcher;

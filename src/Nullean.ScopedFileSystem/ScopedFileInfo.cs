@@ -13,15 +13,15 @@ namespace Nullean.ScopedFileSystem;
 /// An <see cref="IFileInfo"/> decorator that validates all read and write operations stay within
 /// the scope roots and rejects symbolic links. All other members pass through to the inner instance.
 /// </summary>
-public class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, IReadOnlyList<string> scopeRoots) : IFileInfo
+internal class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, ValidationContext ctx) : IFileInfo
 {
 	public IFileSystem FileSystem => innerFs;
 
 	private void ValidateSelf() =>
-		PathValidator.ValidatePath(inner.FullName, scopeRoots, innerFs);
+		PathValidator.ValidatePath(inner.FullName, ctx, innerFs);
 
 	private void ValidateDest(string path) =>
-		PathValidator.ValidatePath(path, scopeRoots, innerFs);
+		PathValidator.ValidatePath(path, ctx, innerFs);
 
 	// ── IFileSystemInfo pass-through ─────────────────────────────────────────
 

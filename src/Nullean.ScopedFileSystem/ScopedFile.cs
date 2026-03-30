@@ -20,17 +20,17 @@ namespace Nullean.ScopedFileSystem;
 /// An <see cref="IFile"/> decorator that validates all read and write operations stay within the
 /// configured scope roots and rejects symbolic links.
 /// </summary>
-public class ScopedFile(IFile inner, IFileSystem innerFs, IReadOnlyList<string> scopeRoots) : IFile
+internal class ScopedFile(IFile inner, IFileSystem innerFs, ValidationContext ctx) : IFile
 {
 	public IFileSystem FileSystem => innerFs;
 
 	// ── Validation helpers ───────────────────────────────────────────────────
 
 	private void Validate(string path) =>
-		PathValidator.ValidatePath(path, scopeRoots, innerFs);
+		PathValidator.ValidatePath(path, ctx, innerFs);
 
 	private bool InScope(string path) =>
-		PathValidator.IsInScope(path, scopeRoots, innerFs);
+		PathValidator.IsInScope(path, ctx, innerFs);
 
 	// ── Scoped: Exists (graceful, no throw) ──────────────────────────────────
 

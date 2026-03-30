@@ -10,13 +10,13 @@ namespace Nullean.ScopedFileSystem;
 /// An <see cref="IFileInfoFactory"/> decorator that returns <see cref="ScopedFileInfo"/> instances
 /// so that all file operations are subject to scope and symlink validation.
 /// </summary>
-public class ScopedFileInfoFactory(IFileInfoFactory inner, IFileSystem innerFs, IReadOnlyList<string> scopeRoots) : IFileInfoFactory
+internal class ScopedFileInfoFactory(IFileInfoFactory inner, IFileSystem innerFs, ValidationContext ctx) : IFileInfoFactory
 {
 	public IFileSystem FileSystem => innerFs;
 
 	public IFileInfo New(string fileName) =>
-		new ScopedFileInfo(inner.New(fileName), innerFs, scopeRoots);
+		new ScopedFileInfo(inner.New(fileName), innerFs, ctx);
 
 	public IFileInfo? Wrap(FileInfo? fileInfo) =>
-		fileInfo is null ? null : new ScopedFileInfo(inner.Wrap(fileInfo)!, innerFs, scopeRoots);
+		fileInfo is null ? null : new ScopedFileInfo(inner.Wrap(fileInfo)!, innerFs, ctx);
 }
