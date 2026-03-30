@@ -10,7 +10,7 @@ namespace Nullean.ScopedFileSystem;
 internal static class PathValidator
 {
 	private static StringComparison Comparison =>
-		OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+		FileSystemPlatform.IsCaseSensitiveFileSystem ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
 	/// <summary>
 	/// Verifies that no root in <paramref name="normalizedRoots"/> is an ancestor of another.
@@ -61,11 +61,6 @@ internal static class PathValidator
 			throw new ScopedFileSystemException(
 				$"Access denied: '{path}' resolves to '{fullPath}' which is outside all configured scope roots.");
 
-		var fileInfo = inner.FileInfo.New(fullPath);
-		if (fileInfo.LinkTarget != null)
-			throw new ScopedFileSystemException(
-				$"Access denied: '{fullPath}' is a symbolic link. Symbolic links are not permitted within the scope roots.");
-
 		ValidateAncestors(fullPath, matchedRoot, inner);
 	}
 
@@ -113,29 +108,14 @@ internal static class PathValidator
 	}
 
 	/// <summary>
-	/// Walks all intermediate directories between <paramref name="fullPath"/> and
-	/// <paramref name="scopeRoot"/>, rejecting symlinks and hidden directories (names starting with '.').
+	/// Validates that <paramref name="fullPath"/> is not a symlink and that no ancestor directory
+	/// up to <paramref name="scopeRoot"/> is a symlink or hidden, using <see cref="FileSystemExtensions.TryValidateSymlinkAccess"/>.
 	/// </summary>
 	private static void ValidateAncestors(string fullPath, string scopeRoot, IFileSystem inner)
 	{
-		var comparison = Comparison;
-		var current = inner.Path.GetDirectoryName(fullPath);
-		while (current is not null && !string.Equals(current, scopeRoot, comparison))
-		{
-			var dirInfo = inner.DirectoryInfo.New(current);
-
-			if (dirInfo.LinkTarget != null)
-				throw new ScopedFileSystemException(
-					$"Access denied: ancestor directory '{current}' is a symbolic link.");
-
-			if (dirInfo.Name.StartsWith('.'))
-				throw new ScopedFileSystemException(
-					$"Access denied: ancestor directory '{current}' is hidden (starts with '.').");
-
-			var parent = inner.Path.GetDirectoryName(current);
-			if (parent is null || string.Equals(parent, current, comparison))
-				break;
-			current = parent;
-		}
+		var fileInfo = inner.FileInfo.New(fullPath);
+		var rootInfo = inner.DirectoryInfo.New(scopeRoot);
+		if (!fileInfo.TryValidateSymlinkAccess(rootInfo, out var error))
+			throw new ScopedFileSystemException($"Access denied: {error}.");
 	}
 }

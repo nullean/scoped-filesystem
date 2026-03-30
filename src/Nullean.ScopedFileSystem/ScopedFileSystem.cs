@@ -27,6 +27,10 @@ public class ScopedFileSystem : IFileSystem
 	private readonly IFileSystem _inner;
 	private readonly IReadOnlyList<string> _scopeRoots;
 
+	/// <summary>Initialises a scoped filesystem rooted at <paramref name="scopeRoot"/>.</summary>
+	public ScopedFileSystem(IFileSystem inner, IDirectoryInfo scopeRoot)
+		: this(inner, scopeRoot.FullName) { }
+
 	/// <summary>
 	/// Initializes a new <see cref="ScopedFileSystem"/>.
 	/// </summary>
