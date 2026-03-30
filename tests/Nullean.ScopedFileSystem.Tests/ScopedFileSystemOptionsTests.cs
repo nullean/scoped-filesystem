@@ -57,10 +57,10 @@ public class ScopedFileSystemOptionsTests
 		var mockFs = new MockFileSystem();
 		mockFs.AddDirectory("/docs");
 		mockFs.AddDirectory("/data");
-		var dirInfo1 = mockFs.DirectoryInfo.New("/docs");
-		var dirInfo2 = mockFs.DirectoryInfo.New("/data");
 
-		var options = new ScopedFileSystemOptions(dirInfo1, dirInfo2);
+		var options = new ScopedFileSystemOptions(
+			mockFs.DirectoryInfo.New("/docs"),
+			mockFs.DirectoryInfo.New("/data"));
 
 		Assert.Equal(2, options.ScopeRoots.Count);
 	}
@@ -68,62 +68,59 @@ public class ScopedFileSystemOptionsTests
 	[Fact]
 	public void Constructor_NoDirectoryInfoRoots_ThrowsArgumentException()
 	{
-		Assert.Throws<ArgumentException>(() => new ScopedFileSystemOptions(Array.Empty<System.IO.Abstractions.IDirectoryInfo>()));
+		Assert.Throws<ArgumentException>(() =>
+			new ScopedFileSystemOptions(Array.Empty<System.IO.Abstractions.IDirectoryInfo>()));
 	}
 
 	// ── ScopedFileSystem integration ─────────────────────────────────────────
 
 	[Fact]
-	public void ScopedFileSystem_AcceptsOptionsConstructor_ReadsFromScopeRoot()
+	public void ScopedFileSystem_InnerPlusOptions_ReadsFromScopeRoot()
 	{
 		var mockFs = new MockFileSystem();
 		mockFs.AddFile("/docs/readme.txt", new MockFileData("hello"));
 
-		var scoped = new ScopedFileSystem(new ScopedFileSystemOptions("/docs") { Inner = mockFs });
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs"));
 
 		Assert.Equal("hello", scoped.File.ReadAllText("/docs/readme.txt"));
 	}
 
 	[Fact]
-	public void ScopedFileSystem_Options_DefaultInnerIsRealFileSystem()
+	public void ScopedFileSystem_OptionsOnly_UsesRealFilesystem()
 	{
+		// Just verify it constructs without error; can't read real files in unit tests
 		var options = new ScopedFileSystemOptions("/tmp");
+		var scoped = new ScopedFileSystem(options);
 
-		Assert.IsType<System.IO.Abstractions.FileSystem>(options.Inner);
+		Assert.NotNull(scoped);
 	}
 
 	[Fact]
 	public void ScopedFileSystem_Options_DefaultAllowedHiddenFileNamesIsEmpty()
 	{
-		var options = new ScopedFileSystemOptions("/tmp");
-
-		Assert.Empty(options.AllowedHiddenFileNames);
+		Assert.Empty(new ScopedFileSystemOptions("/tmp").AllowedHiddenFileNames);
 	}
 
 	[Fact]
 	public void ScopedFileSystem_Options_DefaultAllowedHiddenFolderNamesIsEmpty()
 	{
-		var options = new ScopedFileSystemOptions("/tmp");
-
-		Assert.Empty(options.AllowedHiddenFolderNames);
+		Assert.Empty(new ScopedFileSystemOptions("/tmp").AllowedHiddenFolderNames);
 	}
 
 	[Fact]
 	public void ScopedFileSystem_Options_DefaultAllowedSpecialFoldersIsNone()
 	{
-		var options = new ScopedFileSystemOptions("/tmp");
-
-		Assert.Equal(AllowedSpecialFolder.None, options.AllowedSpecialFolders);
+		Assert.Equal(AllowedSpecialFolder.None, new ScopedFileSystemOptions("/tmp").AllowedSpecialFolders);
 	}
 
 	[Fact]
-	public void ScopedFileSystem_OptionsWithDirectoryInfo_UsesFullName()
+	public void ScopedFileSystem_DirectoryInfoRoots_WorksWithInner()
 	{
 		var mockFs = new MockFileSystem();
 		mockFs.AddFile("/docs/readme.txt", new MockFileData("hello"));
 		var dirInfo = mockFs.DirectoryInfo.New("/docs");
 
-		var scoped = new ScopedFileSystem(new ScopedFileSystemOptions(dirInfo) { Inner = mockFs });
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions(dirInfo));
 
 		Assert.Equal("hello", scoped.File.ReadAllText("/docs/readme.txt"));
 	}

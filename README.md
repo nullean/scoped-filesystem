@@ -11,7 +11,8 @@ A `System.IO.Abstractions` `IFileSystem` decorator that restricts file **read an
 3. The target file's own name must not start with `.` (hidden file), unless the name is in `AllowedHiddenFileNames`.
 4. No ancestor directory between the file and the matched scope root may be a symlink or a hidden directory (name starting with `.`), unless the directory name is in `AllowedHiddenFolderNames`.
 5. `File.Exists()` returns `false` for out-of-scope paths — it never throws.
-6. Directory operations (`IDirectory`, `IDirectoryInfo`) pass through to the inner `IFileSystem` unchanged.
+6. `Directory.Exists()` returns `false` for out-of-scope paths — it never throws.
+7. All `IDirectory` and `IDirectoryInfo` operations are validated with the same rules as file operations.
 
 A `ScopedFileSystemException` (extending `SecurityException`) is thrown on any violation.
 
@@ -28,9 +29,8 @@ IFileSystem scoped = new ScopedFileSystem("/var/www/docs");
 IFileSystem scoped = new ScopedFileSystem(inner, "/var/www/docs");
 
 // Full control via ScopedFileSystemOptions
-IFileSystem scoped = new ScopedFileSystem(new ScopedFileSystemOptions("/var/www/docs")
+IFileSystem scoped = new ScopedFileSystem(inner, new ScopedFileSystemOptions("/var/www/docs")
 {
-    Inner = inner,
     AllowedHiddenFolderNames = new HashSet<string> { ".git" },
     AllowedHiddenFileNames   = new HashSet<string> { ".gitkeep" },
     AllowedSpecialFolders    = AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData,
@@ -127,11 +127,12 @@ var options = new ScopedFileSystemOptions(fs.DirectoryInfo.New("/root1"));
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `ScopeRoots` | `IReadOnlyList<string>` | _(required)_ | Scope root paths |
-| `Inner` | `IFileSystem` | `new FileSystem()` | Underlying filesystem |
+| `ScopeRoots` | `IReadOnlyList<string>` | _(required on constructor)_ | Scope root paths |
 | `AllowedHiddenFileNames` | `IReadOnlySet<string>` | empty | Hidden file names that are allowed |
 | `AllowedHiddenFolderNames` | `IReadOnlySet<string>` | empty | Hidden directory names that are allowed |
 | `AllowedSpecialFolders` | `AllowedSpecialFolder` | `None` | OS special folders to allow |
+
+The inner `IFileSystem` is passed directly to `ScopedFileSystem` rather than through options; overloads without an explicit `inner` default to `new FileSystem()`.
 
 ## Path validation
 

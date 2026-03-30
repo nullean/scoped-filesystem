@@ -45,6 +45,47 @@ public static class FileSystemExtensions
         file.TryValidateSymlinkAccess(docRoot, allowedHiddenFolderNames: null, out error);
 
     /// <summary>
+    /// Validates that <paramref name="directory"/> is not a symlink and that no ancestor directory
+    /// between <paramref name="directory"/> and <paramref name="docRoot"/> is a symlink or hidden
+    /// (unless its name is present in <paramref name="allowedHiddenFolderNames"/>).
+    /// Returns true if access is valid; false with a non-null <paramref name="error"/> describing the violation.
+    /// </summary>
+    public static bool TryValidateSymlinkAccess(
+        this IDirectoryInfo directory,
+        IDirectoryInfo docRoot,
+        IReadOnlySet<string>? allowedHiddenFolderNames,
+        [NotNullWhen(false)] out string? error)
+    {
+        if (directory.Exists && directory.LinkTarget != null)
+        {
+            error = "path must not point to a symlink";
+            return false;
+        }
+
+        var cmp = FileSystemPlatform.IsCaseSensitiveFileSystem
+            ? StringComparison.Ordinal
+            : StringComparison.OrdinalIgnoreCase;
+
+        var dir = directory.Parent;
+        while (dir != null && !string.Equals(dir.FullName, docRoot.FullName, cmp))
+        {
+            if (dir.Name.StartsWith('.') && (allowedHiddenFolderNames is null || !allowedHiddenFolderNames.Contains(dir.Name)))
+            {
+                error = "path must not traverse hidden directories";
+                return false;
+            }
+            if (dir.Exists && dir.LinkTarget != null)
+            {
+                error = "path must not traverse symlinked directories";
+                return false;
+            }
+            dir = dir.Parent;
+        }
+        error = null;
+        return true;
+    }
+
+    /// <summary>
     /// Validates that <paramref name="file"/> is not a symlink and that no ancestor directory
     /// between <paramref name="file"/> and <paramref name="docRoot"/> is a symlink or hidden
     /// (unless its name is present in <paramref name="allowedHiddenFolderNames"/>).

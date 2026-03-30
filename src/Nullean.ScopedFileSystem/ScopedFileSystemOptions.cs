@@ -14,7 +14,7 @@ namespace Nullean.ScopedFileSystem;
 /// <remarks>
 /// <para>
 /// Construct with one or more scope root paths, then use <c>with</c>-style
-/// object-initializer syntax to set optional properties:
+/// expression syntax to set optional properties:
 /// </para>
 /// <code>
 /// var options = new ScopedFileSystemOptions("/my/project")
@@ -22,18 +22,14 @@ namespace Nullean.ScopedFileSystem;
 ///     AllowedHiddenFolderNames = new HashSet&lt;string&gt; { ".git", ".nuget" },
 ///     AllowedSpecialFolders    = AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData,
 /// };
-/// var fs = new ScopedFileSystem(options);
+/// var fs = new ScopedFileSystem(mockFs, options);
 /// </code>
 /// </remarks>
-public sealed class ScopedFileSystemOptions
+public sealed record ScopedFileSystemOptions
 {
 	/// <summary>
 	/// Initialises options with one or more scope root paths supplied as strings.
 	/// </summary>
-	/// <param name="scopeRoots">
-	/// One or more directory paths that define the allowed scope. At least one is required.
-	/// Paths are normalised to absolute, canonical form by <see cref="ScopedFileSystem"/>.
-	/// </param>
 	/// <exception cref="ArgumentException">Thrown when no roots are provided.</exception>
 	public ScopedFileSystemOptions(params string[] scopeRoots)
 	{
@@ -45,10 +41,6 @@ public sealed class ScopedFileSystemOptions
 	/// <summary>
 	/// Initialises options with one or more scope root paths supplied as <see cref="IDirectoryInfo"/> instances.
 	/// </summary>
-	/// <param name="scopeRoots">
-	/// One or more directory infos whose <see cref="IFileSystemInfo.FullName"/> values are used as scope roots.
-	/// At least one is required.
-	/// </param>
 	/// <exception cref="ArgumentException">Thrown when no roots are provided.</exception>
 	public ScopedFileSystemOptions(params IDirectoryInfo[] scopeRoots)
 		: this(scopeRoots is null || scopeRoots.Length == 0
@@ -58,16 +50,10 @@ public sealed class ScopedFileSystemOptions
 	}
 
 	/// <summary>
-	/// The root directory paths that scope all file read and write access.
+	/// The root directory paths that scope all file and directory access.
 	/// No root may be an ancestor of another; <see cref="ScopedFileSystem"/> enforces disjointness at construction.
 	/// </summary>
-	public IReadOnlyList<string> ScopeRoots { get; }
-
-	/// <summary>
-	/// The underlying filesystem implementation. Defaults to the real <see cref="FileSystem"/>.
-	/// Override with a <c>MockFileSystem</c> in tests.
-	/// </summary>
-	public IFileSystem Inner { get; init; } = new FileSystem();
+	public IReadOnlyList<string> ScopeRoots { get; init; }
 
 	/// <summary>
 	/// Hidden file names (names starting with <c>.</c>) that are exempt from the hidden-file protection.
@@ -81,8 +67,7 @@ public sealed class ScopedFileSystemOptions
 
 	/// <summary>
 	/// Hidden directory names (names starting with <c>.</c>) that are exempt from the hidden-directory protection.
-	/// The check is against each ancestor directory's name as the validator walks up from the target file
-	/// to the matched scope root.
+	/// The check is against each directory's own name and each ancestor directory name up to the matched scope root.
 	/// Default comparer is <see cref="StringComparer.OrdinalIgnoreCase"/>; supply your own <see cref="HashSet{T}"/>
 	/// with <see cref="StringComparer.Ordinal"/> when running on a case-sensitive filesystem.
 	/// </summary>

@@ -50,6 +50,38 @@ internal static class PathValidator
 	}
 
 	/// <summary>
+	/// Validates that the directory at <paramref name="path"/> is permitted.
+	/// Same rules as <see cref="ValidatePath"/> except the hidden-name check uses
+	/// <see cref="ValidationContext.AllowedHiddenFolderNames"/> (not <c>AllowedHiddenFileNames</c>)
+	/// for the directory's own name, and ancestor validation uses the directory-info overload
+	/// of <see cref="FileSystemExtensions.TryValidateSymlinkAccess"/>.
+	/// Throws <see cref="ScopedFileSystemException"/> on any violation.
+	/// </summary>
+	internal static void ValidateDirectoryPath(string path, ValidationContext ctx, IFileSystem inner)
+	{
+		var fullPath = inner.Path.GetFullPath(path);
+
+		if (ctx.ResolvedSpecialFolderPaths.Any(sf => IsWithinRoot(fullPath, sf, inner)))
+			return;
+
+		var matchedRoot = ctx.NormalizedRoots.FirstOrDefault(root => IsWithinRoot(fullPath, root, inner));
+		if (matchedRoot is null)
+			throw new ScopedFileSystemException(
+				$"Access denied: '{path}' resolves to '{fullPath}' which is outside all configured scope roots.");
+
+		// Hidden directory name check on the target directory itself
+		var dirName = inner.Path.GetFileName(fullPath);
+		if (!string.IsNullOrEmpty(dirName)
+			&& dirName.StartsWith('.')
+			&& !ctx.AllowedHiddenFolderNames.Contains(dirName))
+			throw new ScopedFileSystemException(
+				$"Access denied: '{dirName}' is a hidden directory. " +
+				$"Add '{dirName}' to {nameof(ScopedFileSystemOptions.AllowedHiddenFolderNames)} to permit access.");
+
+		ValidateDirectoryAncestors(fullPath, matchedRoot, ctx.AllowedHiddenFolderNames, inner);
+	}
+
+	/// <summary>
 	/// Validates that <paramref name="path"/> is permitted:
 	/// <list type="bullet">
 	///   <item>Paths within a resolved special folder bypass all other checks.</item>
@@ -126,6 +158,18 @@ internal static class PathValidator
 			current = parent;
 		}
 		return false;
+	}
+
+	private static void ValidateDirectoryAncestors(
+		string fullPath,
+		string scopeRoot,
+		IReadOnlySet<string> allowedHiddenFolderNames,
+		IFileSystem inner)
+	{
+		var dirInfo = inner.DirectoryInfo.New(fullPath);
+		var rootInfo = inner.DirectoryInfo.New(scopeRoot);
+		if (!dirInfo.TryValidateSymlinkAccess(rootInfo, allowedHiddenFolderNames, out var error))
+			throw new ScopedFileSystemException($"Access denied: {error}.");
 	}
 
 	/// <summary>
