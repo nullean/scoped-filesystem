@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Nullean.ScopedFileSystem/Nullean.ScopedFileSystem.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Nullean.ScopedFileSystem.Tests/Nullean.ScopedFileSystem.Tests.csproj" />
+  </Folder>
+</Solution>
