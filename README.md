@@ -4,17 +4,17 @@ A `System.IO.Abstractions` `IFileSystem` decorator that restricts file **read an
 
 ## What it does
 
-`ScopedFileSystem` wraps any `IFileSystem` and enforces the following rules on all file operations:
+`ScopedFileSystem` wraps any `IFileSystem` and enforces these rules on every file and directory operation:
 
-1. The resolved (canonicalized via `GetFullPath`) path must fall within at least one configured scope root — unless the path is within an explicitly allowed OS special folder.
-2. The target file must not be a symbolic link (`IFileInfo.LinkTarget == null`).
-3. The target file's own name must not start with `.` (hidden file), unless the name is in `AllowedHiddenFileNames`.
-4. No ancestor directory between the file and the matched scope root may be a symlink or a hidden directory (name starting with `.`), unless the directory name is in `AllowedHiddenFolderNames`.
-5. `File.Exists()` returns `false` for out-of-scope paths — it never throws.
-6. `Directory.Exists()` returns `false` for out-of-scope paths — it never throws.
-7. All `IDirectory` and `IDirectoryInfo` operations are validated with the same rules as file operations.
+| Rule | Detail |
+|------|--------|
+| **Scope** | The resolved path must be within a configured scope root or an explicitly allowed OS special folder. |
+| **No symlinks** | The target and all ancestor directories up to the scope root must not be symbolic links. |
+| **No hidden files** | Files whose name starts with `.` are blocked unless the name is in `AllowedHiddenFileNames`. |
+| **No hidden directories** | Directories whose name starts with `.` are blocked unless the name is in `AllowedHiddenFolderNames`. This applies to both the target directory and all ancestors up to the scope root. |
+| **Exists is safe** | `File.Exists()` and `Directory.Exists()` return `false` for out-of-scope paths instead of throwing. |
 
-A `ScopedFileSystemException` (extending `SecurityException`) is thrown on any violation.
+Any violation throws `ScopedFileSystemException` (extends `SecurityException`).
 
 ## Usage
 
