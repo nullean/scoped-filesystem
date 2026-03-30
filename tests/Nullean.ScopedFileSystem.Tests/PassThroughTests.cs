@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using AwesomeAssertions;
 using Xunit;
 
 namespace Nullean.ScopedFileSystem.Tests;
@@ -13,6 +14,7 @@ public class PassThroughTests
 	{
 		var (_, scoped) = Setup.Create("/docs");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.Directory.CreateDirectory("/outside/new-dir"));
+		var act = () => scoped.Directory.CreateDirectory("/outside/new-dir");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 }

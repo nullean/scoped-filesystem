@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using AwesomeAssertions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -10,9 +11,9 @@ namespace Nullean.ScopedFileSystem.Tests;
 public class SpecialFolderTests
 {
 	private static string TrimSep(string path) =>
-		path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+		path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-	private static string TempRoot => TrimSep(System.IO.Path.GetTempPath());
+	private static string TempRoot => TrimSep(Path.GetTempPath());
 
 	private static string AppDataRoot =>
 		TrimSep(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
@@ -30,7 +31,7 @@ public class SpecialFolderTests
 			AllowedSpecialFolders = AllowedSpecialFolder.Temp,
 		});
 
-		Assert.Equal("temp content", scoped.File.ReadAllText(tempFile));
+		scoped.File.ReadAllText(tempFile).Should().Be("temp content");
 	}
 
 	[Fact]
@@ -46,7 +47,7 @@ public class SpecialFolderTests
 
 		scoped.File.WriteAllText(tempFile, "written");
 
-		Assert.Equal("written", mockFs.File.ReadAllText(tempFile));
+		mockFs.File.ReadAllText(tempFile).Should().Be("written");
 	}
 
 	[Fact]
@@ -57,7 +58,8 @@ public class SpecialFolderTests
 		mockFs.AddFile(tempFile, new MockFileData("temp content"));
 		var scoped = new ScopedFileSystem(mockFs, "/docs");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText(tempFile));
+		var act = () => scoped.File.ReadAllText(tempFile);
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -71,7 +73,7 @@ public class SpecialFolderTests
 			AllowedSpecialFolders = AllowedSpecialFolder.Temp,
 		});
 
-		Assert.True(scoped.File.Exists(tempFile));
+		scoped.File.Exists(tempFile).Should().BeTrue();
 	}
 
 	[Fact]
@@ -82,7 +84,7 @@ public class SpecialFolderTests
 		mockFs.AddFile(tempFile, new MockFileData("x"));
 		var scoped = new ScopedFileSystem(mockFs, "/docs");
 
-		Assert.False(scoped.File.Exists(tempFile));
+		scoped.File.Exists(tempFile).Should().BeFalse();
 	}
 
 	// ── Multiple special folders ─────────────────────────────────────────────
@@ -103,8 +105,8 @@ public class SpecialFolderTests
 			AllowedSpecialFolders = AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData,
 		});
 
-		Assert.Equal("from temp", scoped.File.ReadAllText(tempFile));
-		Assert.Equal("from appdata", scoped.File.ReadAllText(appDataFile));
+		scoped.File.ReadAllText(tempFile).Should().Be("from temp");
+		scoped.File.ReadAllText(appDataFile).Should().Be("from appdata");
 	}
 
 	[Fact]
@@ -118,7 +120,7 @@ public class SpecialFolderTests
 			AllowedSpecialFolders = AllowedSpecialFolder.All,
 		});
 
-		Assert.Equal("temp", scoped.File.ReadAllText(tempFile));
+		scoped.File.ReadAllText(tempFile).Should().Be("temp");
 	}
 
 	// ── Hidden files inside special folders are not blocked ──────────────────
@@ -134,6 +136,6 @@ public class SpecialFolderTests
 			AllowedSpecialFolders = AllowedSpecialFolder.Temp,
 		});
 
-		Assert.Equal("hidden in temp", scoped.File.ReadAllText(hiddenFile));
+		scoped.File.ReadAllText(hiddenFile).Should().Be("hidden in temp");
 	}
 }

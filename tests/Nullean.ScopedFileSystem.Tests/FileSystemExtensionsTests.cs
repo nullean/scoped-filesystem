@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using AwesomeAssertions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -19,7 +20,7 @@ public class FileSystemExtensionsTests
 		var file = mockFs.FileInfo.New("/docs/sub/readme.md");
 		var root = mockFs.DirectoryInfo.New("/docs");
 
-		Assert.True(file.IsSubPathOf(root));
+		file.IsSubPathOf(root).Should().BeTrue();
 	}
 
 	[Fact]
@@ -30,7 +31,7 @@ public class FileSystemExtensionsTests
 		var file = mockFs.FileInfo.New("/etc/passwd");
 		var root = mockFs.DirectoryInfo.New("/docs");
 
-		Assert.False(file.IsSubPathOf(root));
+		file.IsSubPathOf(root).Should().BeFalse();
 	}
 
 	[Fact]
@@ -41,7 +42,7 @@ public class FileSystemExtensionsTests
 		var dir = mockFs.DirectoryInfo.New("/docs");
 		var root = mockFs.DirectoryInfo.New("/docs");
 
-		Assert.True(dir.IsSubPathOf(root));
+		dir.IsSubPathOf(root).Should().BeTrue();
 	}
 
 	[Fact]
@@ -52,7 +53,7 @@ public class FileSystemExtensionsTests
 		var dir = mockFs.DirectoryInfo.New("/etc");
 		var root = mockFs.DirectoryInfo.New("/docs");
 
-		Assert.False(dir.IsSubPathOf(root));
+		dir.IsSubPathOf(root).Should().BeFalse();
 	}
 
 	// ── TryValidateSymlinkAccess ──────────────────────────────────────────────
@@ -65,8 +66,8 @@ public class FileSystemExtensionsTests
 		var file = mockFs.FileInfo.New("/docs/readme.md");
 		var root = mockFs.DirectoryInfo.New("/docs");
 
-		Assert.True(file.TryValidateSymlinkAccess(root, out var error));
-		Assert.Null(error);
+		file.TryValidateSymlinkAccess(root, out var error).Should().BeTrue();
+		error.Should().BeNull();
 	}
 
 	[Fact]
@@ -77,8 +78,8 @@ public class FileSystemExtensionsTests
 		var file = mockFs.FileInfo.New("/docs/link.md");
 		var root = mockFs.DirectoryInfo.New("/docs");
 
-		Assert.False(file.TryValidateSymlinkAccess(root, out var error));
-		Assert.NotNull(error);
+		file.TryValidateSymlinkAccess(root, out var error).Should().BeFalse();
+		error.Should().NotBeNull();
 	}
 
 	[Fact]
@@ -89,8 +90,8 @@ public class FileSystemExtensionsTests
 		var file = mockFs.FileInfo.New("/docs/.hidden/readme.md");
 		var root = mockFs.DirectoryInfo.New("/docs");
 
-		Assert.False(file.TryValidateSymlinkAccess(root, out var error));
-		Assert.NotNull(error);
+		file.TryValidateSymlinkAccess(root, out var error).Should().BeFalse();
+		error.Should().NotBeNull();
 	}
 
 	// ── ScopedFileSystem IDirectoryInfo overload ──────────────────────────────
@@ -104,6 +105,6 @@ public class FileSystemExtensionsTests
 
 		var scoped = new ScopedFileSystem(mockFs, scopeDir);
 
-		Assert.Equal("hello", scoped.File.ReadAllText("/docs/readme.md"));
+		scoped.File.ReadAllText("/docs/readme.md").Should().Be("hello");
 	}
 }
