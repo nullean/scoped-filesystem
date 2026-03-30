@@ -1,15 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>Nullean.ScopedFileSystem</AssemblyName>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>Nullean.ScopedFileSystem</RootNamespace>
+
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\build\keys\keypair.snk</AssemblyOriginatorKeyFile>
+
+    <PackageIcon>nuget-icon.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/nullean/scoped-filesystem</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/nullean/scoped-filesystem</PackageProjectUrl>
+    <PackageReleaseNotes>https://github.com/nullean/scoped-filesystem/releases</PackageReleaseNotes>
+
+    <PackageId>Nullean.ScopedFileSystem</PackageId>
+    <Title>Nullean.ScopedFileSystem - A scoped, read-restricting IFileSystem decorator</Title>
+    <Description>A System.IO.Abstractions IFileSystem decorator that restricts file read operations to a configured scope root and rejects symbolic links.</Description>
+
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>Nullean.ScopedFileSystem</AssemblyName>
-    <RootNamespace>Nullean.ScopedFileSystem</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.IO.Abstractions" Version="22.1.0" />
+    <Content Include="..\..\README.md" Pack="true" PackagePath="README.md" CopyToOutputDirectory="PreserveNewest">
+      <Link>README.md</Link>
+    </Content>
+    <Content Include="..\..\nuget-icon.png" CopyToOutputDirectory="PreserveNewest">
+      <Link>nuget-icon.png</Link>
+      <Pack>True</Pack>
+      <PackagePath>nuget-icon.png</PackagePath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.Abstractions" />
   </ItemGroup>
 
 </Project>
