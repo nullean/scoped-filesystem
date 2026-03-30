@@ -19,7 +19,7 @@ namespace Nullean.ScopedFileSystem;
 /// <code>
 /// var options = new ScopedFileSystemOptions("/my/project")
 /// {
-///     AllowedHiddenFolderNames = new HashSet&lt;string&gt; { ".git", ".nuget" },
+///     AllowedHiddenFolderNames = new[] { ".git", ".nuget" },
 ///     AllowedSpecialFolders    = AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData,
 /// };
 /// var fs = new ScopedFileSystem(mockFs, options);
@@ -58,30 +58,18 @@ public sealed record ScopedFileSystemOptions
 	/// <summary>
 	/// Hidden file names (names starting with <c>.</c>) that are exempt from the hidden-file protection.
 	/// The check is against the file's own name segment only (not its ancestor directories).
-	/// Default comparer is <see cref="StringComparer.OrdinalIgnoreCase"/>; supply your own <see cref="HashSet{T}"/>
-	/// with <see cref="StringComparer.Ordinal"/> when running on a case-sensitive filesystem.
+	/// Case sensitivity is determined automatically based on the platform filesystem.
 	/// </summary>
-	/// <example><c>new HashSet&lt;string&gt; { ".gitkeep" }</c></example>
-	public IReadOnlySet<string> AllowedHiddenFileNames { get; init; }
-#if NETSTANDARD2_0 || NETSTANDARD2_1
-		= new ReadOnlySetWrapper<string>(StringComparer.OrdinalIgnoreCase);
-#else
-		= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-#endif
+	/// <example><c>new[] { ".gitkeep" }</c></example>
+	public IReadOnlyCollection<string> AllowedHiddenFileNames { get; init; } = [];
 
 	/// <summary>
 	/// Hidden directory names (names starting with <c>.</c>) that are exempt from the hidden-directory protection.
 	/// The check is against each directory's own name and each ancestor directory name up to the matched scope root.
-	/// Default comparer is <see cref="StringComparer.OrdinalIgnoreCase"/>; supply your own <see cref="HashSet{T}"/>
-	/// with <see cref="StringComparer.Ordinal"/> when running on a case-sensitive filesystem.
+	/// Case sensitivity is determined automatically based on the platform filesystem.
 	/// </summary>
-	/// <example><c>new HashSet&lt;string&gt; { ".git", ".nuget" }</c></example>
-	public IReadOnlySet<string> AllowedHiddenFolderNames { get; init; }
-#if NETSTANDARD2_0 || NETSTANDARD2_1
-		= new ReadOnlySetWrapper<string>(StringComparer.OrdinalIgnoreCase);
-#else
-		= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-#endif
+	/// <example><c>new[] { ".git", ".nuget" }</c></example>
+	public IReadOnlyCollection<string> AllowedHiddenFolderNames { get; init; } = [];
 
 	/// <summary>
 	/// OS special folders that are additionally permitted for read and write access,

@@ -65,8 +65,8 @@ public class ScopedFileSystem : IFileSystem
 	private ScopedFileSystem(
 		IFileSystem inner,
 		IReadOnlyList<string> scopeRoots,
-		IReadOnlySet<string> allowedHiddenFileNames,
-		IReadOnlySet<string> allowedHiddenFolderNames,
+		IReadOnlyCollection<string> allowedHiddenFileNames,
+		IReadOnlyCollection<string> allowedHiddenFolderNames,
 		AllowedSpecialFolder allowedSpecialFolders)
 	{
 		_inner = inner;
@@ -81,8 +81,8 @@ public class ScopedFileSystem : IFileSystem
 		var ctx = new ValidationContext(
 			NormalizedRoots: normalized,
 			ResolvedSpecialFolderPaths: ValidationContext.ResolveSpecialFolderPaths(allowedSpecialFolders),
-			AllowedHiddenFileNames: allowedHiddenFileNames,
-			AllowedHiddenFolderNames: allowedHiddenFolderNames
+			AllowedHiddenFileNames: ValidationContext.ToAllowSet(allowedHiddenFileNames),
+			AllowedHiddenFolderNames: ValidationContext.ToAllowSet(allowedHiddenFolderNames)
 		);
 
 		File = new ScopedFile(_inner.File, _inner, ctx);

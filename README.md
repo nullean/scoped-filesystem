@@ -31,8 +31,8 @@ IFileSystem scoped = new ScopedFileSystem(inner, "/var/www/docs");
 // Full control via ScopedFileSystemOptions
 IFileSystem scoped = new ScopedFileSystem(inner, new ScopedFileSystemOptions("/var/www/docs")
 {
-    AllowedHiddenFolderNames = new HashSet<string> { ".git" },
-    AllowedHiddenFileNames   = new HashSet<string> { ".gitkeep" },
+    AllowedHiddenFolderNames = [".git"],
+    AllowedHiddenFileNames   = [".gitkeep"],
     AllowedSpecialFolders    = AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData,
 });
 ```
@@ -80,14 +80,14 @@ By default, any file or directory whose name begins with `.` is blocked. Use `Sc
 var scoped = new ScopedFileSystem(new ScopedFileSystemOptions("/project")
 {
     // Allow traversing .git directories (e.g. to read .git/config)
-    AllowedHiddenFolderNames = new HashSet<string> { ".git", ".nuget" },
+    AllowedHiddenFolderNames = [".git", ".nuget"],
 
     // Allow reading/writing specific hidden files
-    AllowedHiddenFileNames = new HashSet<string> { ".gitkeep", ".gitignore" },
+    AllowedHiddenFileNames = [".gitkeep", ".gitignore"],
 });
 ```
 
-Allowlist matching uses `OrdinalIgnoreCase` by default (the `HashSet<string>` comparer). Supply a `HashSet<string>` with `StringComparer.Ordinal` when running on a case-sensitive filesystem and exact case matters.
+Allowlist matching is case-sensitive on Linux and case-insensitive on Windows and macOS, matching the platform filesystem behaviour. Any `IReadOnlyCollection<string>` is accepted — no need to configure a comparer.
 
 ## Special folders
 
@@ -128,8 +128,8 @@ var options = new ScopedFileSystemOptions(fs.DirectoryInfo.New("/root1"));
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `ScopeRoots` | `IReadOnlyList<string>` | _(required on constructor)_ | Scope root paths |
-| `AllowedHiddenFileNames` | `IReadOnlySet<string>` | empty | Hidden file names that are allowed |
-| `AllowedHiddenFolderNames` | `IReadOnlySet<string>` | empty | Hidden directory names that are allowed |
+| `AllowedHiddenFileNames` | `IReadOnlyCollection<string>` | empty | Hidden file names that are allowed |
+| `AllowedHiddenFolderNames` | `IReadOnlyCollection<string>` | empty | Hidden directory names that are allowed |
 | `AllowedSpecialFolders` | `AllowedSpecialFolder` | `None` | OS special folders to allow |
 
 The inner `IFileSystem` is passed directly to `ScopedFileSystem` rather than through options; overloads without an explicit `inner` default to `new FileSystem()`.

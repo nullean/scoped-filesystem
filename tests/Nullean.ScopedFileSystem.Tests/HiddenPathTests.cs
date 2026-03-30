@@ -54,7 +54,7 @@ public class HiddenPathTests
 		mockFs.AddFile("/docs/.gitkeep", new MockFileData(""));
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
 		{
-			AllowedHiddenFileNames = new HashSet<string> { ".gitkeep" },
+			AllowedHiddenFileNames = [".gitkeep"],
 		});
 
 		Assert.Equal("", scoped.File.ReadAllText("/docs/.gitkeep"));
@@ -67,7 +67,7 @@ public class HiddenPathTests
 		mockFs.AddDirectory("/docs");
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
 		{
-			AllowedHiddenFileNames = new HashSet<string> { ".gitkeep" },
+			AllowedHiddenFileNames = [".gitkeep"],
 		});
 
 		scoped.File.WriteAllText("/docs/.gitkeep", "");
@@ -82,7 +82,7 @@ public class HiddenPathTests
 		mockFs.AddFile("/docs/.env", new MockFileData("SECRET=x"));
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
 		{
-			AllowedHiddenFileNames = new HashSet<string> { ".gitkeep" },
+			AllowedHiddenFileNames = [".gitkeep"],
 		});
 
 		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/.env"));
@@ -97,7 +97,7 @@ public class HiddenPathTests
 		mockFs.AddFile("/docs/.git/config", new MockFileData("[core]"));
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
 		{
-			AllowedHiddenFolderNames = new HashSet<string> { ".git" },
+			AllowedHiddenFolderNames = [".git"],
 		});
 
 		Assert.Equal("[core]", scoped.File.ReadAllText("/docs/.git/config"));
@@ -110,7 +110,7 @@ public class HiddenPathTests
 		mockFs.AddDirectory("/docs/.git");
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
 		{
-			AllowedHiddenFolderNames = new HashSet<string> { ".git" },
+			AllowedHiddenFolderNames = [".git"],
 		});
 
 		scoped.File.WriteAllText("/docs/.git/COMMIT_EDITMSG", "initial commit");
@@ -125,7 +125,7 @@ public class HiddenPathTests
 		mockFs.AddFile("/docs/.vscode/settings.json", new MockFileData("{}"));
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
 		{
-			AllowedHiddenFolderNames = new HashSet<string> { ".git" },
+			AllowedHiddenFolderNames = [".git"],
 		});
 
 		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/.vscode/settings.json"));
@@ -138,7 +138,7 @@ public class HiddenPathTests
 		mockFs.AddFile("/docs/.git/.env", new MockFileData("SECRET=x"));
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
 		{
-			AllowedHiddenFolderNames = new HashSet<string> { ".git" },
+			AllowedHiddenFolderNames = [".git"],
 		});
 
 		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/.git/.env"));
@@ -151,8 +151,8 @@ public class HiddenPathTests
 		mockFs.AddFile("/docs/.git/.gitignore_global", new MockFileData("*.log"));
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
 		{
-			AllowedHiddenFolderNames = new HashSet<string> { ".git" },
-			AllowedHiddenFileNames = new HashSet<string> { ".gitignore_global" },
+			AllowedHiddenFolderNames = [".git"],
+			AllowedHiddenFileNames = [".gitignore_global"],
 		});
 
 		Assert.Equal("*.log", scoped.File.ReadAllText("/docs/.git/.gitignore_global"));
