@@ -9,13 +9,10 @@ namespace Nullean.ScopedFileSystem.Tests;
 public class PassThroughTests
 {
 	[Fact]
-	public void Directory_CreateOutsideScope_Succeeds()
+	public void Directory_CreateOutsideScope_Throws()
 	{
-		var (mockFs, scoped) = Setup.Create("/docs");
+		var (_, scoped) = Setup.Create("/docs");
 
-		var ex = Record.Exception(() => scoped.Directory.CreateDirectory("/outside/new-dir"));
-
-		Assert.Null(ex);
-		Assert.True(mockFs.Directory.Exists("/outside/new-dir"));
+		Assert.Throws<ScopedFileSystemException>(() => scoped.Directory.CreateDirectory("/outside/new-dir"));
 	}
 }
