@@ -5,8 +5,13 @@
 // Platform-specific APIs are delegated directly to the inner IFile — suppress false positives.
 #pragma warning disable CA1416
 
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 #if NET5_0_OR_GREATER
 using System.Runtime.Versioning;
 #endif

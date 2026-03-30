@@ -2,6 +2,8 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
 
@@ -57,7 +59,7 @@ public static class FileSystemExtensions
         [NotNullWhen(false)] out string? error)
     {
 #if NET6_0_OR_GREATER
-        if (directory.Exists && directory.LinkTarget != null)
+        if (directory is { Exists: true, LinkTarget: not null })
 #else
         if (directory.Exists && new System.IO.DirectoryInfo(directory.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
@@ -79,7 +81,7 @@ public static class FileSystemExtensions
                 return false;
             }
 #if NET6_0_OR_GREATER
-            if (dir.Exists && dir.LinkTarget != null)
+            if (dir is { Exists: true, LinkTarget: not null })
 #else
             if (dir.Exists && new System.IO.DirectoryInfo(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
@@ -106,7 +108,7 @@ public static class FileSystemExtensions
         [NotNullWhen(false)] out string? error)
     {
 #if NET6_0_OR_GREATER
-        if (file.Exists && file.LinkTarget != null)
+        if (file is { Exists: true, LinkTarget: not null })
 #else
         if (file.Exists && new System.IO.FileInfo(file.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
@@ -128,7 +130,7 @@ public static class FileSystemExtensions
                 return false;
             }
 #if NET6_0_OR_GREATER
-            if (dir.Exists && dir.LinkTarget != null)
+            if (dir is { Exists: true, LinkTarget: not null })
 #else
             if (dir.Exists && new System.IO.DirectoryInfo(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif

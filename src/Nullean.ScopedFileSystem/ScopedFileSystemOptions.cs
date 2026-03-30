@@ -2,7 +2,10 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using System;
+using System.Collections.Generic;
 using System.IO.Abstractions;
+using System.Linq;
 
 namespace Nullean.ScopedFileSystem;
 
@@ -43,17 +46,16 @@ public sealed record ScopedFileSystemOptions
 	/// </summary>
 	/// <exception cref="ArgumentException">Thrown when no roots are provided.</exception>
 	public ScopedFileSystemOptions(params IDirectoryInfo[] scopeRoots)
-		: this(scopeRoots is null || scopeRoots.Length == 0
+		: this(scopeRoots.Length == 0
 			? []
-			: scopeRoots.Select(d => d.FullName).ToArray())
-	{
-	}
+			: scopeRoots.Select(d => d.FullName).ToArray()
+		) { }
 
 	/// <summary>
 	/// The root directory paths that scope all file and directory access.
 	/// No root may be an ancestor of another; <see cref="ScopedFileSystem"/> enforces disjointness at construction.
 	/// </summary>
-	public IReadOnlyList<string> ScopeRoots { get; init; }
+	public IReadOnlyList<string> ScopeRoots { get; }
 
 	/// <summary>
 	/// Hidden file names (names starting with <c>.</c>) that are exempt from the hidden-file protection.
