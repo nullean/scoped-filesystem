@@ -63,7 +63,11 @@ public sealed record ScopedFileSystemOptions
 	/// </summary>
 	/// <example><c>new HashSet&lt;string&gt; { ".gitkeep" }</c></example>
 	public IReadOnlySet<string> AllowedHiddenFileNames { get; init; }
+#if NETSTANDARD2_0 || NETSTANDARD2_1
+		= new ReadOnlySetWrapper<string>(StringComparer.OrdinalIgnoreCase);
+#else
 		= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+#endif
 
 	/// <summary>
 	/// Hidden directory names (names starting with <c>.</c>) that are exempt from the hidden-directory protection.
@@ -73,7 +77,11 @@ public sealed record ScopedFileSystemOptions
 	/// </summary>
 	/// <example><c>new HashSet&lt;string&gt; { ".git", ".nuget" }</c></example>
 	public IReadOnlySet<string> AllowedHiddenFolderNames { get; init; }
+#if NETSTANDARD2_0 || NETSTANDARD2_1
+		= new ReadOnlySetWrapper<string>(StringComparer.OrdinalIgnoreCase);
+#else
 		= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+#endif
 
 	/// <summary>
 	/// OS special folders that are additionally permitted for read and write access,

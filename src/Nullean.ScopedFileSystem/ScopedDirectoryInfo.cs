@@ -73,21 +73,27 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 		set => inner.LastWriteTimeUtc = value;
 	}
 
+#if NET6_0_OR_GREATER
 	public string? LinkTarget => inner.LinkTarget;
+#endif
 
 	public string Name => inner.Name;
 
+#if NET7_0_OR_GREATER
 	public UnixFileMode UnixFileMode
 	{
 		get => inner.UnixFileMode;
 		set => inner.UnixFileMode = value;
 	}
+#endif
 
+#if NET6_0_OR_GREATER
 	public void CreateAsSymbolicLink(string pathToTarget)
 	{
 		ValidateSelf();
 		inner.CreateAsSymbolicLink(pathToTarget);
 	}
+#endif
 
 	public void Delete()
 	{
@@ -97,8 +103,10 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 
 	public void Refresh() => inner.Refresh();
 
+#if NET6_0_OR_GREATER
 	public IFileSystemInfo? ResolveLinkTarget(bool returnFinalTarget) =>
 		inner.ResolveLinkTarget(returnFinalTarget);
+#endif
 
 	// ── IDirectoryInfo ───────────────────────────────────────────────────────
 
@@ -151,11 +159,13 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 		return inner.EnumerateDirectories(searchPattern, searchOption).Select(d => new ScopedDirectoryInfo(d, innerFs, ctx));
 	}
 
+#if !NETSTANDARD2_0
 	public IEnumerable<IDirectoryInfo> EnumerateDirectories(string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		ValidateSelf();
 		return inner.EnumerateDirectories(searchPattern, enumerationOptions).Select(d => new ScopedDirectoryInfo(d, innerFs, ctx));
 	}
+#endif
 
 	public IEnumerable<IFileInfo> EnumerateFiles()
 	{
@@ -175,11 +185,13 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 		return inner.EnumerateFiles(searchPattern, searchOption).Select(f => new ScopedFileInfo(f, innerFs, ctx));
 	}
 
+#if !NETSTANDARD2_0
 	public IEnumerable<IFileInfo> EnumerateFiles(string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		ValidateSelf();
 		return inner.EnumerateFiles(searchPattern, enumerationOptions).Select(f => new ScopedFileInfo(f, innerFs, ctx));
 	}
+#endif
 
 	public IEnumerable<IFileSystemInfo> EnumerateFileSystemInfos()
 	{
@@ -199,11 +211,13 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 		return inner.EnumerateFileSystemInfos(searchPattern, searchOption).Select(WrapFileSystemInfo);
 	}
 
+#if !NETSTANDARD2_0
 	public IEnumerable<IFileSystemInfo> EnumerateFileSystemInfos(string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		ValidateSelf();
 		return inner.EnumerateFileSystemInfos(searchPattern, enumerationOptions).Select(WrapFileSystemInfo);
 	}
+#endif
 
 	public IDirectoryInfo[] GetDirectories()
 	{
@@ -223,11 +237,13 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 		return inner.GetDirectories(searchPattern, searchOption).Select(d => (IDirectoryInfo)new ScopedDirectoryInfo(d, innerFs, ctx)).ToArray();
 	}
 
+#if !NETSTANDARD2_0
 	public IDirectoryInfo[] GetDirectories(string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		ValidateSelf();
 		return inner.GetDirectories(searchPattern, enumerationOptions).Select(d => (IDirectoryInfo)new ScopedDirectoryInfo(d, innerFs, ctx)).ToArray();
 	}
+#endif
 
 	public IFileInfo[] GetFiles()
 	{
@@ -247,11 +263,13 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 		return inner.GetFiles(searchPattern, searchOption).Select(f => (IFileInfo)new ScopedFileInfo(f, innerFs, ctx)).ToArray();
 	}
 
+#if !NETSTANDARD2_0
 	public IFileInfo[] GetFiles(string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		ValidateSelf();
 		return inner.GetFiles(searchPattern, enumerationOptions).Select(f => (IFileInfo)new ScopedFileInfo(f, innerFs, ctx)).ToArray();
 	}
+#endif
 
 	public IFileSystemInfo[] GetFileSystemInfos()
 	{
@@ -271,11 +289,13 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 		return inner.GetFileSystemInfos(searchPattern, searchOption).Select(WrapFileSystemInfo).ToArray();
 	}
 
+#if !NETSTANDARD2_0
 	public IFileSystemInfo[] GetFileSystemInfos(string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		ValidateSelf();
 		return inner.GetFileSystemInfos(searchPattern, enumerationOptions).Select(WrapFileSystemInfo).ToArray();
 	}
+#endif
 
 	private IFileSystemInfo WrapFileSystemInfo(IFileSystemInfo info) => info switch
 	{

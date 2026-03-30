@@ -73,21 +73,27 @@ internal class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, ValidationCo
 		set => inner.LastWriteTimeUtc = value;
 	}
 
+#if NET6_0_OR_GREATER
 	public string? LinkTarget => inner.LinkTarget;
+#endif
 
 	public string Name => inner.Name;
 
+#if NET7_0_OR_GREATER
 	public UnixFileMode UnixFileMode
 	{
 		get => inner.UnixFileMode;
 		set => inner.UnixFileMode = value;
 	}
+#endif
 
+#if NET6_0_OR_GREATER
 	public void CreateAsSymbolicLink(string pathToTarget)
 	{
 		ValidateSelf();
 		inner.CreateAsSymbolicLink(pathToTarget);
 	}
+#endif
 
 	public void Delete()
 	{
@@ -97,8 +103,10 @@ internal class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, ValidationCo
 
 	public void Refresh() => inner.Refresh();
 
+#if NET6_0_OR_GREATER
 	public IFileSystemInfo? ResolveLinkTarget(bool returnFinalTarget) =>
 		inner.ResolveLinkTarget(returnFinalTarget);
+#endif
 
 	// ── IFileInfo ─────────────────────────────────────────────────────────────
 
@@ -165,12 +173,14 @@ internal class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, ValidationCo
 		inner.MoveTo(destFileName);
 	}
 
+#if NET6_0_OR_GREATER
 	public void MoveTo(string destFileName, bool overwrite)
 	{
 		ValidateSelf();
 		ValidateDest(destFileName);
 		inner.MoveTo(destFileName, overwrite);
 	}
+#endif
 
 	public FileSystemStream Open(FileMode mode)
 	{
@@ -190,11 +200,13 @@ internal class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, ValidationCo
 		return inner.Open(mode, access, share);
 	}
 
+#if NET6_0_OR_GREATER
 	public FileSystemStream Open(FileStreamOptions options)
 	{
 		ValidateSelf();
 		return inner.Open(options);
 	}
+#endif
 
 	/// <summary>Validates that this file is within the scope roots and is not a symlink before opening.</summary>
 	public FileSystemStream OpenRead()

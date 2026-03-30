@@ -36,20 +36,26 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 		return inner.CreateDirectory(path);
 	}
 
+#if NET7_0_OR_GREATER
 	public IDirectoryInfo CreateDirectory(string path, UnixFileMode unixCreateMode)
 	{
 		Validate(path);
 		return inner.CreateDirectory(path, unixCreateMode);
 	}
+#endif
 
+#if NET6_0_OR_GREATER
 	public IFileSystemInfo CreateSymbolicLink(string path, string pathToTarget)
 	{
 		Validate(path);
 		return inner.CreateSymbolicLink(path, pathToTarget);
 	}
+#endif
 
+#if NET7_0_OR_GREATER
 	public IDirectoryInfo? CreateTempSubdirectory(string? prefix = null) =>
 		inner.CreateTempSubdirectory(prefix);
+#endif
 
 	public void Delete(string path)
 	{
@@ -90,11 +96,13 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 		return inner.EnumerateDirectories(path, searchPattern, searchOption);
 	}
 
+#if !NETSTANDARD2_0
 	public IEnumerable<string> EnumerateDirectories(string path, string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		Validate(path);
 		return inner.EnumerateDirectories(path, searchPattern, enumerationOptions);
 	}
+#endif
 
 	public IEnumerable<string> EnumerateFiles(string path)
 	{
@@ -114,11 +122,13 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 		return inner.EnumerateFiles(path, searchPattern, searchOption);
 	}
 
+#if !NETSTANDARD2_0
 	public IEnumerable<string> EnumerateFiles(string path, string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		Validate(path);
 		return inner.EnumerateFiles(path, searchPattern, enumerationOptions);
 	}
+#endif
 
 	public IEnumerable<string> EnumerateFileSystemEntries(string path)
 	{
@@ -138,11 +148,13 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 		return inner.EnumerateFileSystemEntries(path, searchPattern, searchOption);
 	}
 
+#if !NETSTANDARD2_0
 	public IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		Validate(path);
 		return inner.EnumerateFileSystemEntries(path, searchPattern, enumerationOptions);
 	}
+#endif
 
 	public string[] GetDirectories(string path)
 	{
@@ -162,11 +174,13 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 		return inner.GetDirectories(path, searchPattern, searchOption);
 	}
 
+#if !NETSTANDARD2_0
 	public string[] GetDirectories(string path, string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		Validate(path);
 		return inner.GetDirectories(path, searchPattern, enumerationOptions);
 	}
+#endif
 
 	public string[] GetFiles(string path)
 	{
@@ -186,11 +200,13 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 		return inner.GetFiles(path, searchPattern, searchOption);
 	}
 
+#if !NETSTANDARD2_0
 	public string[] GetFiles(string path, string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		Validate(path);
 		return inner.GetFiles(path, searchPattern, enumerationOptions);
 	}
+#endif
 
 	public string[] GetFileSystemEntries(string path)
 	{
@@ -210,11 +226,13 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 		return inner.GetFileSystemEntries(path, searchPattern, searchOption);
 	}
 
+#if !NETSTANDARD2_0
 	public string[] GetFileSystemEntries(string path, string searchPattern, EnumerationOptions enumerationOptions)
 	{
 		Validate(path);
 		return inner.GetFileSystemEntries(path, searchPattern, enumerationOptions);
 	}
+#endif
 
 	// ── Metadata (read) ──────────────────────────────────────────────────────
 
@@ -304,6 +322,8 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 
 	public IDirectoryInfo? GetParent(string path) => inner.GetParent(path);
 
+#if NET6_0_OR_GREATER
 	public IFileSystemInfo? ResolveLinkTarget(string linkPath, bool returnFinalTarget) =>
 		inner.ResolveLinkTarget(linkPath, returnFinalTarget);
+#endif
 }

@@ -56,7 +56,11 @@ public static class FileSystemExtensions
         IReadOnlySet<string>? allowedHiddenFolderNames,
         [NotNullWhen(false)] out string? error)
     {
+#if NET6_0_OR_GREATER
         if (directory.Exists && directory.LinkTarget != null)
+#else
+        if (directory.Exists && new System.IO.DirectoryInfo(directory.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+#endif
         {
             error = "path must not point to a symlink";
             return false;
@@ -69,12 +73,16 @@ public static class FileSystemExtensions
         var dir = directory.Parent;
         while (dir != null && !string.Equals(dir.FullName, docRoot.FullName, cmp))
         {
-            if (dir.Name.StartsWith('.') && (allowedHiddenFolderNames is null || !allowedHiddenFolderNames.Contains(dir.Name)))
+            if (dir.Name.StartsWith(".") && (allowedHiddenFolderNames is null || !allowedHiddenFolderNames.Contains(dir.Name)))
             {
                 error = "path must not traverse hidden directories";
                 return false;
             }
+#if NET6_0_OR_GREATER
             if (dir.Exists && dir.LinkTarget != null)
+#else
+            if (dir.Exists && new System.IO.DirectoryInfo(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+#endif
             {
                 error = "path must not traverse symlinked directories";
                 return false;
@@ -97,7 +105,11 @@ public static class FileSystemExtensions
         IReadOnlySet<string>? allowedHiddenFolderNames,
         [NotNullWhen(false)] out string? error)
     {
+#if NET6_0_OR_GREATER
         if (file.Exists && file.LinkTarget != null)
+#else
+        if (file.Exists && new System.IO.FileInfo(file.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+#endif
         {
             error = "path must not point to a symlink";
             return false;
@@ -110,12 +122,16 @@ public static class FileSystemExtensions
         var dir = file.Directory;
         while (dir != null && !string.Equals(dir.FullName, docRoot.FullName, cmp))
         {
-            if (dir.Name.StartsWith('.') && (allowedHiddenFolderNames is null || !allowedHiddenFolderNames.Contains(dir.Name)))
+            if (dir.Name.StartsWith(".") && (allowedHiddenFolderNames is null || !allowedHiddenFolderNames.Contains(dir.Name)))
             {
                 error = "path must not traverse hidden directories";
                 return false;
             }
+#if NET6_0_OR_GREATER
             if (dir.Exists && dir.LinkTarget != null)
+#else
+            if (dir.Exists && new System.IO.DirectoryInfo(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+#endif
             {
                 error = "path must not traverse symlinked directories";
                 return false;

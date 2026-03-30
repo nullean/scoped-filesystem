@@ -72,7 +72,7 @@ internal static class PathValidator
 		// Hidden directory name check on the target directory itself
 		var dirName = inner.Path.GetFileName(fullPath);
 		if (!string.IsNullOrEmpty(dirName)
-			&& dirName.StartsWith('.')
+			&& dirName.StartsWith(".")
 			&& !ctx.AllowedHiddenFolderNames.Contains(dirName))
 			throw new ScopedFileSystemException(
 				$"Access denied: '{dirName}' is a hidden directory. " +
@@ -108,7 +108,7 @@ internal static class PathValidator
 		// Hidden file check: block files whose own name starts with '.' unless explicitly allowed
 		var fileName = inner.Path.GetFileName(fullPath);
 		if (!string.IsNullOrEmpty(fileName)
-			&& fileName.StartsWith('.')
+			&& fileName.StartsWith(".")
 			&& !ctx.AllowedHiddenFileNames.Contains(fileName))
 			throw new ScopedFileSystemException(
 				$"Access denied: '{fileName}' is a hidden file. " +
