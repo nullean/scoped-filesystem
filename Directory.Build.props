@@ -5,6 +5,6 @@
     <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Update="MinVer" PrivateAssets="all" />
+    <PackageReference Include="MinVer" PrivateAssets="all" Condition="'$(ManagePackageVersionsCentrally)' == 'true'" />
   </ItemGroup>
 </Project>
