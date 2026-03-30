@@ -10,12 +10,18 @@ using System.IO.Abstractions;
 namespace Nullean.ScopedFileSystem;
 
 /// <summary>
-/// An <see cref="IFileInfo"/> decorator that validates <see cref="OpenRead"/> stays within the scope root
-/// and is not a symlink. All other members pass through to the inner instance.
+/// An <see cref="IFileInfo"/> decorator that validates all read and write operations stay within
+/// the scope roots and rejects symbolic links. All other members pass through to the inner instance.
 /// </summary>
-public class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, string scopeRoot) : IFileInfo
+public class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, IReadOnlyList<string> scopeRoots) : IFileInfo
 {
 	public IFileSystem FileSystem => innerFs;
+
+	private void ValidateSelf() =>
+		PathValidator.ValidatePath(inner.FullName, scopeRoots, innerFs);
+
+	private void ValidateDest(string path) =>
+		PathValidator.ValidatePath(path, scopeRoots, innerFs);
 
 	// ── IFileSystemInfo pass-through ─────────────────────────────────────────
 
@@ -77,17 +83,24 @@ public class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, string scopeRo
 		set => inner.UnixFileMode = value;
 	}
 
-	public void CreateAsSymbolicLink(string pathToTarget) =>
+	public void CreateAsSymbolicLink(string pathToTarget)
+	{
+		ValidateSelf();
 		inner.CreateAsSymbolicLink(pathToTarget);
+	}
 
-	public void Delete() => inner.Delete();
+	public void Delete()
+	{
+		ValidateSelf();
+		inner.Delete();
+	}
 
 	public void Refresh() => inner.Refresh();
 
 	public IFileSystemInfo? ResolveLinkTarget(bool returnFinalTarget) =>
 		inner.ResolveLinkTarget(returnFinalTarget);
 
-	// ── IFileInfo pass-through ────────────────────────────────────────────────
+	// ── IFileInfo ─────────────────────────────────────────────────────────────
 
 	public IDirectoryInfo? Directory => inner.Directory;
 
@@ -101,47 +114,122 @@ public class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, string scopeRo
 
 	public long Length => inner.Length;
 
-	public StreamWriter AppendText() => inner.AppendText();
+	public StreamWriter AppendText()
+	{
+		ValidateSelf();
+		return inner.AppendText();
+	}
 
-	public IFileInfo CopyTo(string destFileName) => inner.CopyTo(destFileName);
+	public IFileInfo CopyTo(string destFileName)
+	{
+		ValidateSelf();
+		ValidateDest(destFileName);
+		return inner.CopyTo(destFileName);
+	}
 
-	public IFileInfo CopyTo(string destFileName, bool overwrite) => inner.CopyTo(destFileName, overwrite);
+	public IFileInfo CopyTo(string destFileName, bool overwrite)
+	{
+		ValidateSelf();
+		ValidateDest(destFileName);
+		return inner.CopyTo(destFileName, overwrite);
+	}
 
-	public FileSystemStream Create() => inner.Create();
+	public FileSystemStream Create()
+	{
+		ValidateSelf();
+		return inner.Create();
+	}
 
-	public StreamWriter CreateText() => inner.CreateText();
+	public StreamWriter CreateText()
+	{
+		ValidateSelf();
+		return inner.CreateText();
+	}
 
-	public void Decrypt() => inner.Decrypt();
+	public void Decrypt()
+	{
+		ValidateSelf();
+		inner.Decrypt();
+	}
 
-	public void Encrypt() => inner.Encrypt();
+	public void Encrypt()
+	{
+		ValidateSelf();
+		inner.Encrypt();
+	}
 
-	public void MoveTo(string destFileName) => inner.MoveTo(destFileName);
+	public void MoveTo(string destFileName)
+	{
+		ValidateSelf();
+		ValidateDest(destFileName);
+		inner.MoveTo(destFileName);
+	}
 
-	public void MoveTo(string destFileName, bool overwrite) => inner.MoveTo(destFileName, overwrite);
+	public void MoveTo(string destFileName, bool overwrite)
+	{
+		ValidateSelf();
+		ValidateDest(destFileName);
+		inner.MoveTo(destFileName, overwrite);
+	}
 
-	public FileSystemStream Open(FileMode mode) => inner.Open(mode);
+	public FileSystemStream Open(FileMode mode)
+	{
+		ValidateSelf();
+		return inner.Open(mode);
+	}
 
-	public FileSystemStream Open(FileMode mode, FileAccess access) => inner.Open(mode, access);
+	public FileSystemStream Open(FileMode mode, FileAccess access)
+	{
+		ValidateSelf();
+		return inner.Open(mode, access);
+	}
 
-	public FileSystemStream Open(FileMode mode, FileAccess access, FileShare share) =>
-		inner.Open(mode, access, share);
+	public FileSystemStream Open(FileMode mode, FileAccess access, FileShare share)
+	{
+		ValidateSelf();
+		return inner.Open(mode, access, share);
+	}
 
-	public FileSystemStream Open(FileStreamOptions options) => inner.Open(options);
+	public FileSystemStream Open(FileStreamOptions options)
+	{
+		ValidateSelf();
+		return inner.Open(options);
+	}
 
-	/// <summary>Validates that this file is within the scope root and is not a symlink before opening.</summary>
+	/// <summary>Validates that this file is within the scope roots and is not a symlink before opening.</summary>
 	public FileSystemStream OpenRead()
 	{
-		PathValidator.ValidateReadPath(inner.FullName, scopeRoot, innerFs);
+		ValidateSelf();
 		return inner.OpenRead();
 	}
 
-	public StreamReader OpenText() => inner.OpenText();
+	public StreamReader OpenText()
+	{
+		ValidateSelf();
+		return inner.OpenText();
+	}
 
-	public FileSystemStream OpenWrite() => inner.OpenWrite();
+	public FileSystemStream OpenWrite()
+	{
+		ValidateSelf();
+		return inner.OpenWrite();
+	}
 
-	public IFileInfo Replace(string destinationFileName, string? destinationBackupFileName) =>
-		inner.Replace(destinationFileName, destinationBackupFileName);
+	public IFileInfo Replace(string destinationFileName, string? destinationBackupFileName)
+	{
+		ValidateSelf();
+		ValidateDest(destinationFileName);
+		if (destinationBackupFileName != null)
+			ValidateDest(destinationBackupFileName);
+		return inner.Replace(destinationFileName, destinationBackupFileName);
+	}
 
-	public IFileInfo Replace(string destinationFileName, string? destinationBackupFileName, bool ignoreMetadataErrors) =>
-		inner.Replace(destinationFileName, destinationBackupFileName, ignoreMetadataErrors);
+	public IFileInfo Replace(string destinationFileName, string? destinationBackupFileName, bool ignoreMetadataErrors)
+	{
+		ValidateSelf();
+		ValidateDest(destinationFileName);
+		if (destinationBackupFileName != null)
+			ValidateDest(destinationBackupFileName);
+		return inner.Replace(destinationFileName, destinationBackupFileName, ignoreMetadataErrors);
+	}
 }

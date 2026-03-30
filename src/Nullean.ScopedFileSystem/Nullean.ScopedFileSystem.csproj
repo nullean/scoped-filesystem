@@ -16,8 +16,8 @@
     <PackageReleaseNotes>https://github.com/nullean/scoped-filesystem/releases</PackageReleaseNotes>
 
     <PackageId>Nullean.ScopedFileSystem</PackageId>
-    <Title>Nullean.ScopedFileSystem - A scoped, read-restricting IFileSystem decorator</Title>
-    <Description>A System.IO.Abstractions IFileSystem decorator that restricts file read operations to a configured scope root and rejects symbolic links.</Description>
+    <Title>Nullean.ScopedFileSystem - A scoped IFileSystem decorator</Title>
+    <Description>A System.IO.Abstractions IFileSystem decorator that restricts file read and write operations to one or more configured scope roots and rejects symbolic links.</Description>
 
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <LangVersion>latest</LangVersion>

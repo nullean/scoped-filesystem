@@ -9,72 +9,133 @@ namespace Nullean.ScopedFileSystem;
 /// <summary>Shared path validation logic for scope and symlink enforcement.</summary>
 internal static class PathValidator
 {
+	private static StringComparison Comparison =>
+		OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
 	/// <summary>
-	/// Returns true when <paramref name="path"/> is within <paramref name="scopeRoot"/>,
-	/// without throwing. Used by <c>Exists</c> to silently return false for out-of-scope paths.
+	/// Verifies that no root in <paramref name="normalizedRoots"/> is an ancestor of another.
 	/// </summary>
-	internal static bool IsInScope(string path, string scopeRoot, IFileSystem inner)
+	/// <param name="normalizedRoots">Absolute, canonical (already <c>GetFullPath</c>-resolved) scope roots.</param>
+	/// <param name="inner">The filesystem used for path traversal.</param>
+	/// <exception cref="ArgumentException">
+	/// Thrown when any root is a strict ancestor of another root. Roots must be fully disjoint;
+	/// nesting is not permitted because it creates ambiguity about which policies apply and
+	/// makes reasoning about the effective scope significantly harder.
+	/// </exception>
+	internal static void ValidateRootsAreDisjoint(IReadOnlyList<string> normalizedRoots, IFileSystem inner)
 	{
-		var fullPath = inner.Path.GetFullPath(path);
-		return IsWithinRoot(fullPath, scopeRoot);
+		for (var i = 0; i < normalizedRoots.Count; i++)
+		for (var j = i + 1; j < normalizedRoots.Count; j++)
+		{
+			var a = normalizedRoots[i];
+			var b = normalizedRoots[j];
+			if (IsStrictAncestorOf(a, b, inner) || IsStrictAncestorOf(b, a, inner))
+				throw new ArgumentException(
+					$"Scope roots must be disjoint: '{a}' is an ancestor of '{b}' (or vice versa). " +
+					"No scope root may be a parent or child of another scope root.",
+					nameof(normalizedRoots));
+		}
 	}
 
 	/// <summary>
-	/// Validates that <paramref name="path"/> is within <paramref name="scopeRoot"/>,
-	/// is not a symlink, and has no hidden or symlinked ancestors up to the scope root.
+	/// Returns true when <paramref name="path"/> is within any of the <paramref name="scopeRoots"/>,
+	/// without throwing. Used by <c>Exists</c> to silently return false for out-of-scope paths.
+	/// </summary>
+	internal static bool IsInScope(string path, IReadOnlyList<string> scopeRoots, IFileSystem inner)
+	{
+		var fullPath = inner.Path.GetFullPath(path);
+		return scopeRoots.Any(root => IsWithinRoot(fullPath, root, inner));
+	}
+
+	/// <summary>
+	/// Validates that <paramref name="path"/> is within one of the <paramref name="scopeRoots"/>,
+	/// is not a symlink, and has no symlinked or hidden ancestors between the file and the matched scope root.
 	/// Throws <see cref="ScopedFileSystemException"/> on any violation.
 	/// </summary>
-	internal static void ValidateReadPath(string path, string scopeRoot, IFileSystem inner)
+	internal static void ValidatePath(string path, IReadOnlyList<string> scopeRoots, IFileSystem inner)
 	{
 		var fullPath = inner.Path.GetFullPath(path);
 
-		if (!IsWithinRoot(fullPath, scopeRoot))
+		var matchedRoot = scopeRoots.FirstOrDefault(root => IsWithinRoot(fullPath, root, inner));
+		if (matchedRoot is null)
 			throw new ScopedFileSystemException(
-				$"Access denied: '{path}' resolves to '{fullPath}' which is outside the scope root '{scopeRoot}'."
-			);
+				$"Access denied: '{path}' resolves to '{fullPath}' which is outside all configured scope roots.");
 
 		var fileInfo = inner.FileInfo.New(fullPath);
 		if (fileInfo.LinkTarget != null)
 			throw new ScopedFileSystemException(
-				$"Access denied: '{fullPath}' is a symbolic link. Symlinks are not permitted within the scope root."
-			);
+				$"Access denied: '{fullPath}' is a symbolic link. Symbolic links are not permitted within the scope roots.");
 
-		ValidateAncestors(fullPath, scopeRoot, inner);
+		ValidateAncestors(fullPath, matchedRoot, inner);
 	}
 
-	private static bool IsWithinRoot(string fullPath, string scopeRoot)
+	/// <summary>
+	/// Walks up the directory tree from <paramref name="fullPath"/> using <c>inner.Path.GetDirectoryName</c>
+	/// to determine whether <paramref name="scopeRoot"/> is a true ancestor (or the path itself).
+	/// This traversal-based check avoids string-prefix tricks (e.g. /docs vs /docs-extra).
+	/// </summary>
+	private static bool IsWithinRoot(string fullPath, string scopeRoot, IFileSystem inner)
 	{
-		var comparison = OperatingSystem.IsLinux()
-			? StringComparison.Ordinal
-			: StringComparison.OrdinalIgnoreCase;
-
-		return fullPath.Equals(scopeRoot, comparison)
-			|| fullPath.StartsWith(scopeRoot + System.IO.Path.DirectorySeparatorChar, comparison)
-			|| fullPath.StartsWith(scopeRoot + System.IO.Path.AltDirectorySeparatorChar, comparison);
+		var comparison = Comparison;
+		var current = fullPath;
+		while (current != null)
+		{
+			if (string.Equals(current, scopeRoot, comparison))
+				return true;
+			var parent = inner.Path.GetDirectoryName(current);
+			if (parent is null || string.Equals(parent, current, comparison))
+				break; // reached the filesystem root
+			current = parent;
+		}
+		return false;
 	}
 
+	/// <summary>
+	/// Returns true when <paramref name="ancestor"/> is a strict (non-equal) parent of
+	/// <paramref name="descendant"/>. Both paths must already be canonical (GetFullPath-resolved).
+	/// Uses <c>inner.Path.GetDirectoryName</c> traversal so that paths sharing a prefix
+	/// but not in an actual parent-child relationship are not falsely matched.
+	/// </summary>
+	private static bool IsStrictAncestorOf(string ancestor, string descendant, IFileSystem inner)
+	{
+		var comparison = Comparison;
+		var current = inner.Path.GetDirectoryName(descendant);
+		while (current is not null)
+		{
+			if (string.Equals(current, ancestor, comparison))
+				return true;
+			var parent = inner.Path.GetDirectoryName(current);
+			if (parent is null || string.Equals(parent, current, comparison))
+				break;
+			current = parent;
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Walks all intermediate directories between <paramref name="fullPath"/> and
+	/// <paramref name="scopeRoot"/>, rejecting symlinks and hidden directories (names starting with '.').
+	/// </summary>
 	private static void ValidateAncestors(string fullPath, string scopeRoot, IFileSystem inner)
 	{
-		var comparison = OperatingSystem.IsLinux()
-			? StringComparison.Ordinal
-			: StringComparison.OrdinalIgnoreCase;
-
+		var comparison = Comparison;
 		var current = inner.Path.GetDirectoryName(fullPath);
-		while (current != null && !current.Equals(scopeRoot, comparison))
+		while (current is not null && !string.Equals(current, scopeRoot, comparison))
 		{
 			var dirInfo = inner.DirectoryInfo.New(current);
 
 			if (dirInfo.LinkTarget != null)
 				throw new ScopedFileSystemException(
-					$"Access denied: ancestor directory '{current}' is a symbolic link."
-				);
+					$"Access denied: ancestor directory '{current}' is a symbolic link.");
 
 			if (dirInfo.Name.StartsWith('.'))
 				throw new ScopedFileSystemException(
-					$"Access denied: ancestor directory '{current}' is hidden (starts with '.')."
-				);
+					$"Access denied: ancestor directory '{current}' is hidden (starts with '.').");
 
-			current = inner.Path.GetDirectoryName(current);
+			var parent = inner.Path.GetDirectoryName(current);
+			if (parent is null || string.Equals(parent, current, comparison))
+				break;
+			current = parent;
 		}
 	}
 }

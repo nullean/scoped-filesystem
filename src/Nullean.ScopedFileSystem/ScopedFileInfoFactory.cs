@@ -8,15 +8,15 @@ namespace Nullean.ScopedFileSystem;
 
 /// <summary>
 /// An <see cref="IFileInfoFactory"/> decorator that returns <see cref="ScopedFileInfo"/> instances
-/// so that <c>OpenRead()</c> is subject to scope and symlink validation.
+/// so that all file operations are subject to scope and symlink validation.
 /// </summary>
-public class ScopedFileInfoFactory(IFileInfoFactory inner, IFileSystem innerFs, string scopeRoot) : IFileInfoFactory
+public class ScopedFileInfoFactory(IFileInfoFactory inner, IFileSystem innerFs, IReadOnlyList<string> scopeRoots) : IFileInfoFactory
 {
 	public IFileSystem FileSystem => innerFs;
 
 	public IFileInfo New(string fileName) =>
-		new ScopedFileInfo(inner.New(fileName), innerFs, scopeRoot);
+		new ScopedFileInfo(inner.New(fileName), innerFs, scopeRoots);
 
 	public IFileInfo? Wrap(FileInfo? fileInfo) =>
-		fileInfo is null ? null : new ScopedFileInfo(inner.Wrap(fileInfo)!, innerFs, scopeRoot);
+		fileInfo is null ? null : new ScopedFileInfo(inner.Wrap(fileInfo)!, innerFs, scopeRoots);
 }

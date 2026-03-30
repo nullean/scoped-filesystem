@@ -13,20 +13,20 @@ using Microsoft.Win32.SafeHandles;
 namespace Nullean.ScopedFileSystem;
 
 /// <summary>
-/// An <see cref="IFile"/> decorator that validates all read operations stay within the configured scope root
-/// and rejects symlinks. Write and mutating operations pass through to the inner implementation.
+/// An <see cref="IFile"/> decorator that validates all read and write operations stay within the
+/// configured scope roots and rejects symbolic links.
 /// </summary>
-public class ScopedFile(IFile inner, IFileSystem innerFs, string scopeRoot) : IFile
+public class ScopedFile(IFile inner, IFileSystem innerFs, IReadOnlyList<string> scopeRoots) : IFile
 {
 	public IFileSystem FileSystem => innerFs;
 
 	// ── Validation helpers ───────────────────────────────────────────────────
 
 	private void Validate(string path) =>
-		PathValidator.ValidateReadPath(path, scopeRoot, innerFs);
+		PathValidator.ValidatePath(path, scopeRoots, innerFs);
 
 	private bool InScope(string path) =>
-		PathValidator.IsInScope(path, scopeRoot, innerFs);
+		PathValidator.IsInScope(path, scopeRoots, innerFs);
 
 	// ── Scoped: Exists (graceful, no throw) ──────────────────────────────────
 
@@ -133,110 +133,195 @@ public class ScopedFile(IFile inner, IFileSystem innerFs, string scopeRoot) : IF
 
 	public FileSystemStream Open(string path, FileMode mode)
 	{
-		// Validate for read-access modes
-		if (IsReadMode(mode))
-			Validate(path);
+		Validate(path);
 		return inner.Open(path, mode);
 	}
 
 	public FileSystemStream Open(string path, FileMode mode, FileAccess access)
 	{
-		if (access.HasFlag(FileAccess.Read))
-			Validate(path);
+		Validate(path);
 		return inner.Open(path, mode, access);
 	}
 
 	public FileSystemStream Open(string path, FileMode mode, FileAccess access, FileShare share)
 	{
-		if (access.HasFlag(FileAccess.Read))
-			Validate(path);
+		Validate(path);
 		return inner.Open(path, mode, access, share);
 	}
 
 	public FileSystemStream Open(string path, FileStreamOptions options)
 	{
-		if (options.Access.HasFlag(FileAccess.Read))
-			Validate(path);
+		Validate(path);
 		return inner.Open(path, options);
 	}
 
-	// ── Pass-through: all write/mutate operations ─────────────────────────────
+	// ── Scoped: Write / mutate methods ───────────────────────────────────────
 
-	public void AppendAllBytes(string path, byte[] bytes) =>
+	public void AppendAllBytes(string path, byte[] bytes)
+	{
+		Validate(path);
 		inner.AppendAllBytes(path, bytes);
+	}
 
-	public void AppendAllBytes(string path, ReadOnlySpan<byte> bytes) =>
+	public void AppendAllBytes(string path, ReadOnlySpan<byte> bytes)
+	{
+		Validate(path);
 		inner.AppendAllBytes(path, bytes);
+	}
 
-	public Task AppendAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default) =>
-		inner.AppendAllBytesAsync(path, bytes, cancellationToken);
+	public Task AppendAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.AppendAllBytesAsync(path, bytes, cancellationToken);
+	}
 
-	public Task AppendAllBytesAsync(string path, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken = default) =>
-		inner.AppendAllBytesAsync(path, bytes, cancellationToken);
+	public Task AppendAllBytesAsync(string path, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.AppendAllBytesAsync(path, bytes, cancellationToken);
+	}
 
-	public void AppendAllLines(string path, IEnumerable<string> contents) =>
+	public void AppendAllLines(string path, IEnumerable<string> contents)
+	{
+		Validate(path);
 		inner.AppendAllLines(path, contents);
+	}
 
-	public void AppendAllLines(string path, IEnumerable<string> contents, Encoding encoding) =>
+	public void AppendAllLines(string path, IEnumerable<string> contents, Encoding encoding)
+	{
+		Validate(path);
 		inner.AppendAllLines(path, contents, encoding);
+	}
 
-	public Task AppendAllLinesAsync(string path, IEnumerable<string> contents, CancellationToken cancellationToken = default) =>
-		inner.AppendAllLinesAsync(path, contents, cancellationToken);
+	public Task AppendAllLinesAsync(string path, IEnumerable<string> contents, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.AppendAllLinesAsync(path, contents, cancellationToken);
+	}
 
-	public Task AppendAllLinesAsync(string path, IEnumerable<string> contents, Encoding encoding, CancellationToken cancellationToken = default) =>
-		inner.AppendAllLinesAsync(path, contents, encoding, cancellationToken);
+	public Task AppendAllLinesAsync(string path, IEnumerable<string> contents, Encoding encoding, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.AppendAllLinesAsync(path, contents, encoding, cancellationToken);
+	}
 
-	public void AppendAllText(string path, string? contents) =>
+	public void AppendAllText(string path, string? contents)
+	{
+		Validate(path);
 		inner.AppendAllText(path, contents);
+	}
 
-	public void AppendAllText(string path, ReadOnlySpan<char> contents) =>
+	public void AppendAllText(string path, ReadOnlySpan<char> contents)
+	{
+		Validate(path);
 		inner.AppendAllText(path, contents);
+	}
 
-	public void AppendAllText(string path, string? contents, Encoding encoding) =>
+	public void AppendAllText(string path, string? contents, Encoding encoding)
+	{
+		Validate(path);
 		inner.AppendAllText(path, contents, encoding);
+	}
 
-	public void AppendAllText(string path, ReadOnlySpan<char> contents, Encoding encoding) =>
+	public void AppendAllText(string path, ReadOnlySpan<char> contents, Encoding encoding)
+	{
+		Validate(path);
 		inner.AppendAllText(path, contents, encoding);
+	}
 
-	public Task AppendAllTextAsync(string path, string? contents, CancellationToken cancellationToken = default) =>
-		inner.AppendAllTextAsync(path, contents, cancellationToken);
+	public Task AppendAllTextAsync(string path, string? contents, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.AppendAllTextAsync(path, contents, cancellationToken);
+	}
 
-	public Task AppendAllTextAsync(string path, ReadOnlyMemory<char> contents, CancellationToken cancellationToken = default) =>
-		inner.AppendAllTextAsync(path, contents, cancellationToken);
+	public Task AppendAllTextAsync(string path, ReadOnlyMemory<char> contents, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.AppendAllTextAsync(path, contents, cancellationToken);
+	}
 
-	public Task AppendAllTextAsync(string path, string? contents, Encoding encoding, CancellationToken cancellationToken = default) =>
-		inner.AppendAllTextAsync(path, contents, encoding, cancellationToken);
+	public Task AppendAllTextAsync(string path, string? contents, Encoding encoding, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.AppendAllTextAsync(path, contents, encoding, cancellationToken);
+	}
 
-	public Task AppendAllTextAsync(string path, ReadOnlyMemory<char> contents, Encoding encoding, CancellationToken cancellationToken = default) =>
-		inner.AppendAllTextAsync(path, contents, encoding, cancellationToken);
+	public Task AppendAllTextAsync(string path, ReadOnlyMemory<char> contents, Encoding encoding, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.AppendAllTextAsync(path, contents, encoding, cancellationToken);
+	}
 
-	public StreamWriter AppendText(string path) => inner.AppendText(path);
+	public StreamWriter AppendText(string path)
+	{
+		Validate(path);
+		return inner.AppendText(path);
+	}
 
-	public void Copy(string sourceFileName, string destFileName) =>
+	public void Copy(string sourceFileName, string destFileName)
+	{
+		Validate(sourceFileName);
+		Validate(destFileName);
 		inner.Copy(sourceFileName, destFileName);
+	}
 
-	public void Copy(string sourceFileName, string destFileName, bool overwrite) =>
+	public void Copy(string sourceFileName, string destFileName, bool overwrite)
+	{
+		Validate(sourceFileName);
+		Validate(destFileName);
 		inner.Copy(sourceFileName, destFileName, overwrite);
+	}
 
-	public FileSystemStream Create(string path) => inner.Create(path);
+	public FileSystemStream Create(string path)
+	{
+		Validate(path);
+		return inner.Create(path);
+	}
 
-	public FileSystemStream Create(string path, int bufferSize) => inner.Create(path, bufferSize);
+	public FileSystemStream Create(string path, int bufferSize)
+	{
+		Validate(path);
+		return inner.Create(path, bufferSize);
+	}
 
-	public FileSystemStream Create(string path, int bufferSize, FileOptions options) =>
-		inner.Create(path, bufferSize, options);
+	public FileSystemStream Create(string path, int bufferSize, FileOptions options)
+	{
+		Validate(path);
+		return inner.Create(path, bufferSize, options);
+	}
 
-	public IFileSystemInfo CreateSymbolicLink(string path, string pathToTarget) =>
-		inner.CreateSymbolicLink(path, pathToTarget);
+	public IFileSystemInfo CreateSymbolicLink(string path, string pathToTarget)
+	{
+		Validate(path);
+		return inner.CreateSymbolicLink(path, pathToTarget);
+	}
 
-	public StreamWriter CreateText(string path) => inner.CreateText(path);
+	public StreamWriter CreateText(string path)
+	{
+		Validate(path);
+		return inner.CreateText(path);
+	}
 
 	[SupportedOSPlatform("windows")]
-	public void Decrypt(string path) => inner.Decrypt(path);
+	public void Decrypt(string path)
+	{
+		Validate(path);
+		inner.Decrypt(path);
+	}
 
-	public void Delete(string path) => inner.Delete(path);
+	public void Delete(string path)
+	{
+		Validate(path);
+		inner.Delete(path);
+	}
 
 	[SupportedOSPlatform("windows")]
-	public void Encrypt(string path) => inner.Encrypt(path);
+	public void Encrypt(string path)
+	{
+		Validate(path);
+		inner.Encrypt(path);
+	}
 
 	public FileAttributes GetAttributes(string path) => inner.GetAttributes(path);
 
@@ -270,128 +355,224 @@ public class ScopedFile(IFile inner, IFileSystem innerFs, string scopeRoot) : IF
 
 	public UnixFileMode GetUnixFileMode(SafeFileHandle fileHandle) => inner.GetUnixFileMode(fileHandle);
 
-	public void Move(string sourceFileName, string destFileName) =>
+	public void Move(string sourceFileName, string destFileName)
+	{
+		Validate(sourceFileName);
+		Validate(destFileName);
 		inner.Move(sourceFileName, destFileName);
+	}
 
-	public void Move(string sourceFileName, string destFileName, bool overwrite) =>
+	public void Move(string sourceFileName, string destFileName, bool overwrite)
+	{
+		Validate(sourceFileName);
+		Validate(destFileName);
 		inner.Move(sourceFileName, destFileName, overwrite);
+	}
 
-	public FileSystemStream OpenWrite(string path) => inner.OpenWrite(path);
+	public FileSystemStream OpenWrite(string path)
+	{
+		Validate(path);
+		return inner.OpenWrite(path);
+	}
 
-	public void Replace(string sourceFileName, string destinationFileName, string? destinationBackupFileName) =>
+	public void Replace(string sourceFileName, string destinationFileName, string? destinationBackupFileName)
+	{
+		Validate(sourceFileName);
+		Validate(destinationFileName);
+		if (destinationBackupFileName != null)
+			Validate(destinationBackupFileName);
 		inner.Replace(sourceFileName, destinationFileName, destinationBackupFileName);
+	}
 
-	public void Replace(string sourceFileName, string destinationFileName, string? destinationBackupFileName, bool ignoreMetadataErrors) =>
+	public void Replace(string sourceFileName, string destinationFileName, string? destinationBackupFileName, bool ignoreMetadataErrors)
+	{
+		Validate(sourceFileName);
+		Validate(destinationFileName);
+		if (destinationBackupFileName != null)
+			Validate(destinationBackupFileName);
 		inner.Replace(sourceFileName, destinationFileName, destinationBackupFileName, ignoreMetadataErrors);
+	}
 
 	public IFileSystemInfo? ResolveLinkTarget(string linkPath, bool returnFinalTarget) =>
 		inner.ResolveLinkTarget(linkPath, returnFinalTarget);
 
-	public void SetAttributes(string path, FileAttributes fileAttributes) =>
+	public void SetAttributes(string path, FileAttributes fileAttributes)
+	{
+		Validate(path);
 		inner.SetAttributes(path, fileAttributes);
+	}
 
 	public void SetAttributes(SafeFileHandle fileHandle, FileAttributes fileAttributes) =>
 		inner.SetAttributes(fileHandle, fileAttributes);
 
-	public void SetCreationTime(string path, DateTime creationTime) =>
+	public void SetCreationTime(string path, DateTime creationTime)
+	{
+		Validate(path);
 		inner.SetCreationTime(path, creationTime);
+	}
 
 	public void SetCreationTime(SafeFileHandle fileHandle, DateTime creationTime) =>
 		inner.SetCreationTime(fileHandle, creationTime);
 
-	public void SetCreationTimeUtc(string path, DateTime creationTimeUtc) =>
+	public void SetCreationTimeUtc(string path, DateTime creationTimeUtc)
+	{
+		Validate(path);
 		inner.SetCreationTimeUtc(path, creationTimeUtc);
+	}
 
 	public void SetCreationTimeUtc(SafeFileHandle fileHandle, DateTime creationTimeUtc) =>
 		inner.SetCreationTimeUtc(fileHandle, creationTimeUtc);
 
-	public void SetLastAccessTime(string path, DateTime lastAccessTime) =>
+	public void SetLastAccessTime(string path, DateTime lastAccessTime)
+	{
+		Validate(path);
 		inner.SetLastAccessTime(path, lastAccessTime);
+	}
 
 	public void SetLastAccessTime(SafeFileHandle fileHandle, DateTime lastAccessTime) =>
 		inner.SetLastAccessTime(fileHandle, lastAccessTime);
 
-	public void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc) =>
+	public void SetLastAccessTimeUtc(string path, DateTime lastAccessTimeUtc)
+	{
+		Validate(path);
 		inner.SetLastAccessTimeUtc(path, lastAccessTimeUtc);
+	}
 
 	public void SetLastAccessTimeUtc(SafeFileHandle fileHandle, DateTime lastAccessTimeUtc) =>
 		inner.SetLastAccessTimeUtc(fileHandle, lastAccessTimeUtc);
 
-	public void SetLastWriteTime(string path, DateTime lastWriteTime) =>
+	public void SetLastWriteTime(string path, DateTime lastWriteTime)
+	{
+		Validate(path);
 		inner.SetLastWriteTime(path, lastWriteTime);
+	}
 
 	public void SetLastWriteTime(SafeFileHandle fileHandle, DateTime lastWriteTime) =>
 		inner.SetLastWriteTime(fileHandle, lastWriteTime);
 
-	public void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc) =>
+	public void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
+	{
+		Validate(path);
 		inner.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+	}
 
 	public void SetLastWriteTimeUtc(SafeFileHandle fileHandle, DateTime lastWriteTimeUtc) =>
 		inner.SetLastWriteTimeUtc(fileHandle, lastWriteTimeUtc);
 
-	public void SetUnixFileMode(string path, UnixFileMode mode) =>
+	public void SetUnixFileMode(string path, UnixFileMode mode)
+	{
+		Validate(path);
 		inner.SetUnixFileMode(path, mode);
+	}
 
 	public void SetUnixFileMode(SafeFileHandle fileHandle, UnixFileMode mode) =>
 		inner.SetUnixFileMode(fileHandle, mode);
 
-	public void WriteAllBytes(string path, byte[] bytes) =>
+	public void WriteAllBytes(string path, byte[] bytes)
+	{
+		Validate(path);
 		inner.WriteAllBytes(path, bytes);
+	}
 
-	public void WriteAllBytes(string path, ReadOnlySpan<byte> bytes) =>
+	public void WriteAllBytes(string path, ReadOnlySpan<byte> bytes)
+	{
+		Validate(path);
 		inner.WriteAllBytes(path, bytes);
+	}
 
-	public Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default) =>
-		inner.WriteAllBytesAsync(path, bytes, cancellationToken);
+	public Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.WriteAllBytesAsync(path, bytes, cancellationToken);
+	}
 
-	public Task WriteAllBytesAsync(string path, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken = default) =>
-		inner.WriteAllBytesAsync(path, bytes, cancellationToken);
+	public Task WriteAllBytesAsync(string path, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.WriteAllBytesAsync(path, bytes, cancellationToken);
+	}
 
-	public void WriteAllLines(string path, string[] contents) =>
+	public void WriteAllLines(string path, string[] contents)
+	{
+		Validate(path);
 		inner.WriteAllLines(path, contents);
+	}
 
-	public void WriteAllLines(string path, IEnumerable<string> contents) =>
+	public void WriteAllLines(string path, IEnumerable<string> contents)
+	{
+		Validate(path);
 		inner.WriteAllLines(path, contents);
+	}
 
-	public void WriteAllLines(string path, string[] contents, Encoding encoding) =>
+	public void WriteAllLines(string path, string[] contents, Encoding encoding)
+	{
+		Validate(path);
 		inner.WriteAllLines(path, contents, encoding);
+	}
 
-	public void WriteAllLines(string path, IEnumerable<string> contents, Encoding encoding) =>
+	public void WriteAllLines(string path, IEnumerable<string> contents, Encoding encoding)
+	{
+		Validate(path);
 		inner.WriteAllLines(path, contents, encoding);
+	}
 
-	public Task WriteAllLinesAsync(string path, IEnumerable<string> contents, CancellationToken cancellationToken = default) =>
-		inner.WriteAllLinesAsync(path, contents, cancellationToken);
+	public Task WriteAllLinesAsync(string path, IEnumerable<string> contents, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.WriteAllLinesAsync(path, contents, cancellationToken);
+	}
 
-	public Task WriteAllLinesAsync(string path, IEnumerable<string> contents, Encoding encoding, CancellationToken cancellationToken = default) =>
-		inner.WriteAllLinesAsync(path, contents, encoding, cancellationToken);
+	public Task WriteAllLinesAsync(string path, IEnumerable<string> contents, Encoding encoding, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.WriteAllLinesAsync(path, contents, encoding, cancellationToken);
+	}
 
-	public void WriteAllText(string path, string? contents) =>
+	public void WriteAllText(string path, string? contents)
+	{
+		Validate(path);
 		inner.WriteAllText(path, contents);
+	}
 
-	public void WriteAllText(string path, ReadOnlySpan<char> contents) =>
+	public void WriteAllText(string path, ReadOnlySpan<char> contents)
+	{
+		Validate(path);
 		inner.WriteAllText(path, contents);
+	}
 
-	public void WriteAllText(string path, string? contents, Encoding encoding) =>
+	public void WriteAllText(string path, string? contents, Encoding encoding)
+	{
+		Validate(path);
 		inner.WriteAllText(path, contents, encoding);
+	}
 
-	public void WriteAllText(string path, ReadOnlySpan<char> contents, Encoding encoding) =>
+	public void WriteAllText(string path, ReadOnlySpan<char> contents, Encoding encoding)
+	{
+		Validate(path);
 		inner.WriteAllText(path, contents, encoding);
+	}
 
-	public Task WriteAllTextAsync(string path, string? contents, CancellationToken cancellationToken = default) =>
-		inner.WriteAllTextAsync(path, contents, cancellationToken);
+	public Task WriteAllTextAsync(string path, string? contents, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.WriteAllTextAsync(path, contents, cancellationToken);
+	}
 
-	public Task WriteAllTextAsync(string path, ReadOnlyMemory<char> contents, CancellationToken cancellationToken = default) =>
-		inner.WriteAllTextAsync(path, contents, cancellationToken);
+	public Task WriteAllTextAsync(string path, ReadOnlyMemory<char> contents, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.WriteAllTextAsync(path, contents, cancellationToken);
+	}
 
-	public Task WriteAllTextAsync(string path, string? contents, Encoding encoding, CancellationToken cancellationToken = default) =>
-		inner.WriteAllTextAsync(path, contents, encoding, cancellationToken);
+	public Task WriteAllTextAsync(string path, string? contents, Encoding encoding, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.WriteAllTextAsync(path, contents, encoding, cancellationToken);
+	}
 
-	public Task WriteAllTextAsync(string path, ReadOnlyMemory<char> contents, Encoding encoding, CancellationToken cancellationToken = default) =>
-		inner.WriteAllTextAsync(path, contents, encoding, cancellationToken);
-
-	// ── Private helpers ───────────────────────────────────────────────────────
-
-	/// <summary>True when the FileMode implies read access (Open or OpenOrCreate without explicit write-only mode).</summary>
-	private static bool IsReadMode(FileMode mode) =>
-		mode is FileMode.Open or FileMode.OpenOrCreate;
+	public Task WriteAllTextAsync(string path, ReadOnlyMemory<char> contents, Encoding encoding, CancellationToken cancellationToken = default)
+	{
+		Validate(path);
+		return inner.WriteAllTextAsync(path, contents, encoding, cancellationToken);
+	}
 }
