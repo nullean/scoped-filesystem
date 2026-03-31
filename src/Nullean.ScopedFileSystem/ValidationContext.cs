@@ -16,7 +16,8 @@ internal sealed record ValidationContext(
 	IReadOnlyList<string> NormalizedRoots,
 	IReadOnlyList<string> ResolvedSpecialFolderPaths,
 	IReadOnlySet<string> AllowedHiddenFileNames,
-	IReadOnlySet<string> AllowedHiddenFolderNames
+	IReadOnlySet<string> AllowedHiddenFolderNames,
+	bool VerboseExceptions = false
 )
 {
 	/// <summary>
