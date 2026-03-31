@@ -114,6 +114,65 @@ public class ScopedFileSystemOptionsTests
 	}
 
 	[Fact]
+	public void ScopedFileSystem_Options_DefaultVerboseExceptionsIsFalse()
+	{
+		Assert.False(new ScopedFileSystemOptions("/tmp").VerboseExceptions);
+	}
+
+	// ── VerboseExceptions ────────────────────────────────────────────────────
+
+	[Fact]
+	public void VerboseExceptions_False_MessageDoesNotIncludeAccessiblePaths()
+	{
+		var mockFs = new MockFileSystem();
+		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { VerboseExceptions = false });
+
+		var ex = Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/etc/passwd"));
+
+		Assert.DoesNotContain("Accessible paths", ex.Message);
+	}
+
+	[Fact]
+	public void VerboseExceptions_True_MessageIncludesScopeRoot()
+	{
+		var mockFs = new MockFileSystem();
+		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { VerboseExceptions = true });
+
+		var ex = Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/etc/passwd"));
+
+		Assert.Contains("Accessible paths", ex.Message);
+		Assert.Contains("/docs", ex.Message);
+	}
+
+	[Fact]
+	public void VerboseExceptions_True_MessageIncludesAllScopeRoots()
+	{
+		var mockFs = new MockFileSystem();
+		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs", "/data") { VerboseExceptions = true });
+
+		var ex = Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/etc/passwd"));
+
+		Assert.Contains("/docs", ex.Message);
+		Assert.Contains("/data", ex.Message);
+	}
+
+	[Fact]
+	public void VerboseExceptions_True_DirectoryAccessOutsideScope_MessageIncludesScopeRoot()
+	{
+		var mockFs = new MockFileSystem();
+		mockFs.AddDirectory("/etc/secret");
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { VerboseExceptions = true });
+
+		var ex = Assert.Throws<ScopedFileSystemException>(() => scoped.Directory.CreateDirectory("/etc/secret"));
+
+		Assert.Contains("Accessible paths", ex.Message);
+		Assert.Contains("/docs", ex.Message);
+	}
+
+	[Fact]
 	public void ScopedFileSystem_DirectoryInfoRoots_WorksWithInner()
 	{
 		var mockFs = new MockFileSystem();

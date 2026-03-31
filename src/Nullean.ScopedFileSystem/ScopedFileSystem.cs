@@ -32,7 +32,7 @@ public class ScopedFileSystem : IFileSystem
 	/// Initialises a <see cref="ScopedFileSystem"/> with an explicit inner filesystem and full options.
 	/// </summary>
 	public ScopedFileSystem(IFileSystem inner, ScopedFileSystemOptions options)
-		: this(inner, options.ScopeRoots, options.AllowedHiddenFileNames, options.AllowedHiddenFolderNames, options.AllowedSpecialFolders) { }
+		: this(inner, options.ScopeRoots, options.AllowedHiddenFileNames, options.AllowedHiddenFolderNames, options.AllowedSpecialFolders, options.VerboseExceptions) { }
 
 	/// <summary>
 	/// Initialises a <see cref="ScopedFileSystem"/> using <see cref="FileSystem"/> as the inner filesystem.
@@ -67,7 +67,8 @@ public class ScopedFileSystem : IFileSystem
 		IReadOnlyList<string> scopeRoots,
 		IReadOnlyCollection<string> allowedHiddenFileNames,
 		IReadOnlyCollection<string> allowedHiddenFolderNames,
-		AllowedSpecialFolder allowedSpecialFolders)
+		AllowedSpecialFolder allowedSpecialFolders,
+		bool verboseExceptions = false)
 	{
 		_inner = inner;
 
@@ -82,7 +83,8 @@ public class ScopedFileSystem : IFileSystem
 			NormalizedRoots: normalized,
 			ResolvedSpecialFolderPaths: ValidationContext.ResolveSpecialFolderPaths(allowedSpecialFolders),
 			AllowedHiddenFileNames: ValidationContext.ToAllowSet(allowedHiddenFileNames),
-			AllowedHiddenFolderNames: ValidationContext.ToAllowSet(allowedHiddenFolderNames)
+			AllowedHiddenFolderNames: ValidationContext.ToAllowSet(allowedHiddenFolderNames),
+			VerboseExceptions: verboseExceptions
 		);
 
 		File = new ScopedFile(_inner.File, _inner, ctx);

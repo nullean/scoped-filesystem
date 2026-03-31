@@ -80,4 +80,11 @@ public sealed record ScopedFileSystemOptions
 	/// </summary>
 	/// <example><c>AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData</c></example>
 	public AllowedSpecialFolder AllowedSpecialFolders { get; init; } = AllowedSpecialFolder.None;
+
+	/// <summary>
+	/// When <see langword="true"/>, out-of-scope <see cref="ScopedFileSystemException"/> messages include
+	/// the full list of accessible paths (scope roots and any allowed special folders).
+	/// Defaults to <see langword="false"/> to keep exception messages concise in production.
+	/// </summary>
+	public bool VerboseExceptions { get; init; } = false;
 }
