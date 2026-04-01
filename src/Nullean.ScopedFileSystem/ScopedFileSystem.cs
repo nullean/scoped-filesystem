@@ -69,6 +69,9 @@ public class ScopedFileSystem : IFileSystem
 		IReadOnlyCollection<string> allowedHiddenFolderNames,
 		AllowedSpecialFolder allowedSpecialFolders)
 	{
+		if (inner is ScopedFileSystem)
+			throw new ArgumentException("Cannot wrap a ScopedFileSystem inside another ScopedFileSystem.", nameof(inner));
+
 		_inner = inner;
 
 		var normalized = scopeRoots
@@ -90,6 +93,9 @@ public class ScopedFileSystem : IFileSystem
 		Directory = new ScopedDirectory(_inner.Directory, _inner, ctx);
 		DirectoryInfo = new ScopedDirectoryInfoFactory(_inner.DirectoryInfo, _inner, ctx);
 	}
+
+	/// <summary>Gets the runtime <see cref="Type"/> of the inner <see cref="IFileSystem"/> this instance wraps.</summary>
+	public Type InnerType => _inner.GetType();
 
 	public IFile File { get; }
 	public IFileInfoFactory FileInfo { get; }
