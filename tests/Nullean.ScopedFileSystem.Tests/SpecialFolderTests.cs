@@ -10,9 +10,9 @@ namespace Nullean.ScopedFileSystem.Tests;
 public class SpecialFolderTests
 {
 	private static string TrimSep(string path) =>
-		path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+		path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-	private static string TempRoot => TrimSep(System.IO.Path.GetTempPath());
+	private static string TempRoot => TrimSep(Path.GetTempPath());
 
 	private static string AppDataRoot =>
 		TrimSep(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));

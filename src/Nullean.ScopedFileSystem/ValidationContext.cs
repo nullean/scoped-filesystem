@@ -41,7 +41,7 @@ internal sealed record ValidationContext(
 		var paths = new List<string>(4);
 
 		if (flags.HasFlag(AllowedSpecialFolder.Temp))
-			Add(paths, System.IO.Path.GetTempPath());
+			Add(paths, Path.GetTempPath());
 
 		if (flags.HasFlag(AllowedSpecialFolder.ApplicationData))
 			Add(paths, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
@@ -57,7 +57,7 @@ internal sealed record ValidationContext(
 		static void Add(List<string> list, string path)
 		{
 			if (!string.IsNullOrEmpty(path))
-				list.Add(path.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar));
+				list.Add(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
 		}
 	}
 }

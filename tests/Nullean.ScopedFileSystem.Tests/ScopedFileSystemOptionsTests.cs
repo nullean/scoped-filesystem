@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -31,10 +32,8 @@ public class ScopedFileSystemOptionsTests
 	}
 
 	[Fact]
-	public void Constructor_NoStringRoots_ThrowsArgumentException()
-	{
+	public void Constructor_NoStringRoots_ThrowsArgumentException() =>
 		Assert.Throws<ArgumentException>(() => new ScopedFileSystemOptions(Array.Empty<string>()));
-	}
 
 	// ── Constructor: IDirectoryInfo roots ────────────────────────────────────
 
@@ -66,11 +65,9 @@ public class ScopedFileSystemOptionsTests
 	}
 
 	[Fact]
-	public void Constructor_NoDirectoryInfoRoots_ThrowsArgumentException()
-	{
+	public void Constructor_NoDirectoryInfoRoots_ThrowsArgumentException() =>
 		Assert.Throws<ArgumentException>(() =>
-			new ScopedFileSystemOptions(Array.Empty<System.IO.Abstractions.IDirectoryInfo>()));
-	}
+			new ScopedFileSystemOptions(Array.Empty<IDirectoryInfo>()));
 
 	// ── ScopedFileSystem integration ─────────────────────────────────────────
 
@@ -96,22 +93,16 @@ public class ScopedFileSystemOptionsTests
 	}
 
 	[Fact]
-	public void ScopedFileSystem_Options_DefaultAllowedHiddenFileNamesIsEmpty()
-	{
+	public void ScopedFileSystem_Options_DefaultAllowedHiddenFileNamesIsEmpty() =>
 		Assert.Empty(new ScopedFileSystemOptions("/tmp").AllowedHiddenFileNames);
-	}
 
 	[Fact]
-	public void ScopedFileSystem_Options_DefaultAllowedHiddenFolderNamesIsEmpty()
-	{
+	public void ScopedFileSystem_Options_DefaultAllowedHiddenFolderNamesIsEmpty() =>
 		Assert.Empty(new ScopedFileSystemOptions("/tmp").AllowedHiddenFolderNames);
-	}
 
 	[Fact]
-	public void ScopedFileSystem_Options_DefaultAllowedSpecialFoldersIsNone()
-	{
+	public void ScopedFileSystem_Options_DefaultAllowedSpecialFoldersIsNone() =>
 		Assert.Equal(AllowedSpecialFolder.None, new ScopedFileSystemOptions("/tmp").AllowedSpecialFolders);
-	}
 
 	[Fact]
 	public void ScopedFileSystem_DirectoryInfoRoots_WorksWithInner()
