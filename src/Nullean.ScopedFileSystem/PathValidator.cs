@@ -2,7 +2,10 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using System;
+using System.Collections.Generic;
 using System.IO.Abstractions;
+using System.Linq;
 
 namespace Nullean.ScopedFileSystem;
 
@@ -42,6 +45,16 @@ internal static class PathValidator
 	/// folder paths in <paramref name="ctx"/>, without throwing.
 	/// Used by <c>Exists</c> to silently return false for out-of-scope paths.
 	/// </summary>
+	private static string OutOfScopeMessage(string path, string fullPath, ValidationContext ctx)
+	{
+		var msg = $"Access denied: '{path}' resolves to '{fullPath}' which is outside all configured scope roots.";
+		if (!ctx.VerboseExceptions)
+			return msg;
+
+		var accessible = ctx.NormalizedRoots.Concat(ctx.ResolvedSpecialFolderPaths).ToArray();
+		return msg + " Accessible paths: [" + string.Join(", ", accessible) + "].";
+	}
+
 	internal static bool IsInScope(string path, ValidationContext ctx, IFileSystem inner)
 	{
 		var fullPath = inner.Path.GetFullPath(path);
@@ -66,8 +79,7 @@ internal static class PathValidator
 
 		var matchedRoot = ctx.NormalizedRoots.FirstOrDefault(root => IsWithinRoot(fullPath, root, inner));
 		if (matchedRoot is null)
-			throw new ScopedFileSystemException(
-				$"Access denied: '{path}' resolves to '{fullPath}' which is outside all configured scope roots.");
+			throw new ScopedFileSystemException(OutOfScopeMessage(path, fullPath, ctx));
 
 		// Hidden directory name check on the target directory itself
 		var dirName = inner.Path.GetFileName(fullPath);
@@ -102,8 +114,7 @@ internal static class PathValidator
 
 		var matchedRoot = ctx.NormalizedRoots.FirstOrDefault(root => IsWithinRoot(fullPath, root, inner));
 		if (matchedRoot is null)
-			throw new ScopedFileSystemException(
-				$"Access denied: '{path}' resolves to '{fullPath}' which is outside all configured scope roots.");
+			throw new ScopedFileSystemException(OutOfScopeMessage(path, fullPath, ctx));
 
 		// Hidden file check: block files whose own name starts with '.' unless explicitly allowed
 		var fileName = inner.Path.GetFileName(fullPath);

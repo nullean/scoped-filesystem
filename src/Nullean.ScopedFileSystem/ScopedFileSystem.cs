@@ -2,7 +2,10 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using System;
+using System.Collections.Generic;
 using System.IO.Abstractions;
+using System.Linq;
 
 namespace Nullean.ScopedFileSystem;
 
@@ -32,7 +35,7 @@ public class ScopedFileSystem : IFileSystem
 	/// Initialises a <see cref="ScopedFileSystem"/> with an explicit inner filesystem and full options.
 	/// </summary>
 	public ScopedFileSystem(IFileSystem inner, ScopedFileSystemOptions options)
-		: this(inner, options.ScopeRoots, options.AllowedHiddenFileNames, options.AllowedHiddenFolderNames, options.AllowedSpecialFolders) { }
+		: this(inner, options.ScopeRoots, options.AllowedHiddenFileNames, options.AllowedHiddenFolderNames, options.AllowedSpecialFolders, options.VerboseExceptions) { }
 
 	/// <summary>
 	/// Initialises a <see cref="ScopedFileSystem"/> using <see cref="FileSystem"/> as the inner filesystem.
@@ -67,8 +70,12 @@ public class ScopedFileSystem : IFileSystem
 		IReadOnlyList<string> scopeRoots,
 		IReadOnlyCollection<string> allowedHiddenFileNames,
 		IReadOnlyCollection<string> allowedHiddenFolderNames,
-		AllowedSpecialFolder allowedSpecialFolders)
+		AllowedSpecialFolder allowedSpecialFolders,
+		bool verboseExceptions = false)
 	{
+		if (inner is ScopedFileSystem)
+			throw new ArgumentException("Cannot wrap a ScopedFileSystem inside another ScopedFileSystem.", nameof(inner));
+
 		_inner = inner;
 
 		var normalized = scopeRoots
@@ -82,7 +89,8 @@ public class ScopedFileSystem : IFileSystem
 			NormalizedRoots: normalized,
 			ResolvedSpecialFolderPaths: ValidationContext.ResolveSpecialFolderPaths(allowedSpecialFolders),
 			AllowedHiddenFileNames: ValidationContext.ToAllowSet(allowedHiddenFileNames),
-			AllowedHiddenFolderNames: ValidationContext.ToAllowSet(allowedHiddenFolderNames)
+			AllowedHiddenFolderNames: ValidationContext.ToAllowSet(allowedHiddenFolderNames),
+			VerboseExceptions: verboseExceptions
 		);
 
 		File = new ScopedFile(_inner.File, _inner, ctx);
@@ -90,6 +98,9 @@ public class ScopedFileSystem : IFileSystem
 		Directory = new ScopedDirectory(_inner.Directory, _inner, ctx);
 		DirectoryInfo = new ScopedDirectoryInfoFactory(_inner.DirectoryInfo, _inner, ctx);
 	}
+
+	/// <summary>Gets the runtime <see cref="Type"/> of the inner <see cref="IFileSystem"/> this instance wraps.</summary>
+	public Type InnerType => _inner.GetType();
 
 	public IFile File { get; }
 	public IFileInfoFactory FileInfo { get; }

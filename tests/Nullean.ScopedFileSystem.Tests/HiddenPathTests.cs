@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using AwesomeAssertions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -22,7 +23,8 @@ public class HiddenPathTests
 		mockFs.AddFile("/docs/.env", new MockFileData("SECRET=password"));
 		var scoped = new ScopedFileSystem(mockFs, "/docs");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/.env"));
+		var act = () => scoped.File.ReadAllText("/docs/.env");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -32,7 +34,8 @@ public class HiddenPathTests
 		mockFs.AddDirectory("/docs");
 		var scoped = new ScopedFileSystem(mockFs, "/docs");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.WriteAllText("/docs/.env", "SECRET=password"));
+		var act = () => scoped.File.WriteAllText("/docs/.env", "SECRET=password");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -42,7 +45,8 @@ public class HiddenPathTests
 		mockFs.AddFile("/docs/sub/.env", new MockFileData("SECRET=password"));
 		var scoped = new ScopedFileSystem(mockFs, "/docs");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/sub/.env"));
+		var act = () => scoped.File.ReadAllText("/docs/sub/.env");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	// ── AllowedHiddenFileNames ───────────────────────────────────────────────
@@ -57,7 +61,7 @@ public class HiddenPathTests
 			AllowedHiddenFileNames = [".gitkeep"],
 		});
 
-		Assert.Equal("", scoped.File.ReadAllText("/docs/.gitkeep"));
+		scoped.File.ReadAllText("/docs/.gitkeep").Should().Be("");
 	}
 
 	[Fact]
@@ -72,7 +76,7 @@ public class HiddenPathTests
 
 		scoped.File.WriteAllText("/docs/.gitkeep", "");
 
-		Assert.True(mockFs.File.Exists("/docs/.gitkeep"));
+		mockFs.File.Exists("/docs/.gitkeep").Should().BeTrue();
 	}
 
 	[Fact]
@@ -85,7 +89,8 @@ public class HiddenPathTests
 			AllowedHiddenFileNames = [".gitkeep"],
 		});
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/.env"));
+		var act = () => scoped.File.ReadAllText("/docs/.env");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	// ── AllowedHiddenFolderNames ─────────────────────────────────────────────
@@ -100,7 +105,7 @@ public class HiddenPathTests
 			AllowedHiddenFolderNames = [".git"],
 		});
 
-		Assert.Equal("[core]", scoped.File.ReadAllText("/docs/.git/config"));
+		scoped.File.ReadAllText("/docs/.git/config").Should().Be("[core]");
 	}
 
 	[Fact]
@@ -115,7 +120,7 @@ public class HiddenPathTests
 
 		scoped.File.WriteAllText("/docs/.git/COMMIT_EDITMSG", "initial commit");
 
-		Assert.Equal("initial commit", mockFs.File.ReadAllText("/docs/.git/COMMIT_EDITMSG"));
+		mockFs.File.ReadAllText("/docs/.git/COMMIT_EDITMSG").Should().Be("initial commit");
 	}
 
 	[Fact]
@@ -128,7 +133,8 @@ public class HiddenPathTests
 			AllowedHiddenFolderNames = [".git"],
 		});
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/.vscode/settings.json"));
+		var act = () => scoped.File.ReadAllText("/docs/.vscode/settings.json");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -141,7 +147,8 @@ public class HiddenPathTests
 			AllowedHiddenFolderNames = [".git"],
 		});
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/.git/.env"));
+		var act = () => scoped.File.ReadAllText("/docs/.git/.env");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -155,6 +162,6 @@ public class HiddenPathTests
 			AllowedHiddenFileNames = [".gitignore_global"],
 		});
 
-		Assert.Equal("*.log", scoped.File.ReadAllText("/docs/.git/.gitignore_global"));
+		scoped.File.ReadAllText("/docs/.git/.gitignore_global").Should().Be("*.log");
 	}
 }

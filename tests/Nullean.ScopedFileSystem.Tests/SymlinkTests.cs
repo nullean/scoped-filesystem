@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using AwesomeAssertions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -15,7 +16,8 @@ public class SymlinkTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/docs/link.md", new MockFileData("content") { LinkTarget = "/etc/passwd" });
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/link.md"));
+		Action act = () => scoped.File.ReadAllText("/docs/link.md");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -26,7 +28,8 @@ public class SymlinkTests
 		mockFs.AddFile("/docs/real.md", new MockFileData("real content"));
 		mockFs.AddFile("/docs/link.md", new MockFileData("real content") { LinkTarget = "/docs/real.md" });
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/docs/link.md"));
+		Action act = () => scoped.File.ReadAllText("/docs/link.md");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -35,7 +38,8 @@ public class SymlinkTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/docs/link.md", new MockFileData("") { LinkTarget = "/etc/passwd" });
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.WriteAllText("/docs/link.md", "evil"));
+		var act = () => scoped.File.WriteAllText("/docs/link.md", "evil");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -45,7 +49,7 @@ public class SymlinkTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/docs/link.md", new MockFileData("") { LinkTarget = "/etc/passwd" });
 
-		Assert.True(scoped.File.Exists("/docs/link.md"));
+		scoped.File.Exists("/docs/link.md").Should().BeTrue();
 	}
 
 	[Fact]
@@ -54,6 +58,7 @@ public class SymlinkTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/docs/link.md", new MockFileData("") { LinkTarget = "/etc/passwd" });
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.FileInfo.New("/docs/link.md").OpenRead());
+			var act = () => scoped.FileInfo.New("/docs/link.md").OpenRead();
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 }

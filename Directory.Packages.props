@@ -12,6 +12,6 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="2.4.1" />
     <PackageVersion Include="Nullean.VsTest.Pretty.TestLogger" Version="0.10.0" />
-    <PackageVersion Include="FluentAssertions" Version="7.2.0" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.0.0" />
   </ItemGroup>
 </Project>

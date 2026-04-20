@@ -5,6 +5,8 @@
 // Platform-specific APIs are delegated directly to the inner IFileInfo — suppress false positives.
 #pragma warning disable CA1416
 
+using System;
+using System.IO;
 using System.IO.Abstractions;
 
 namespace Nullean.ScopedFileSystem;

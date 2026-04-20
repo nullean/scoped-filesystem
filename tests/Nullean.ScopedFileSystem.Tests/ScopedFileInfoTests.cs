@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using AwesomeAssertions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -17,7 +18,7 @@ public class ScopedFileInfoTests
 
 		using var stream = scoped.FileInfo.New("/docs/readme.md").OpenRead();
 
-		Assert.NotNull(stream);
+		stream.Should().NotBeNull();
 	}
 
 	[Fact]
@@ -26,7 +27,8 @@ public class ScopedFileInfoTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.FileInfo.New("/etc/passwd").OpenRead());
+		var act = () => scoped.FileInfo.New("/etc/passwd").OpenRead();
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -35,7 +37,8 @@ public class ScopedFileInfoTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.FileInfo.New("/etc/passwd").OpenText());
+		var act = () => scoped.FileInfo.New("/etc/passwd").OpenText();
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -44,7 +47,8 @@ public class ScopedFileInfoTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/file.txt", new MockFileData("data"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.FileInfo.New("/etc/file.txt").OpenWrite());
+		var act = () => scoped.FileInfo.New("/etc/file.txt").OpenWrite();
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -52,7 +56,8 @@ public class ScopedFileInfoTests
 	{
 		var (_, scoped) = Setup.Create("/docs");
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.FileInfo.New("/etc/new.txt").Create());
+		var act = () => scoped.FileInfo.New("/etc/new.txt").Create();
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -61,7 +66,8 @@ public class ScopedFileInfoTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/file.txt", new MockFileData("data"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.FileInfo.New("/etc/file.txt").Delete());
+		var act = () => scoped.FileInfo.New("/etc/file.txt").Delete();
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -71,8 +77,8 @@ public class ScopedFileInfoTests
 		mockFs.AddFile("/docs/source.txt", new MockFileData("data"));
 		mockFs.AddDirectory("/etc");
 
-		Assert.Throws<ScopedFileSystemException>(() =>
-			scoped.FileInfo.New("/docs/source.txt").CopyTo("/etc/dest.txt"));
+		var act = () => scoped.FileInfo.New("/docs/source.txt").CopyTo("/etc/dest.txt");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -81,8 +87,8 @@ public class ScopedFileInfoTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/file.txt", new MockFileData("data"));
 
-		Assert.Throws<ScopedFileSystemException>(() =>
-			scoped.FileInfo.New("/etc/file.txt").Open(FileMode.Open));
+		var act = () => scoped.FileInfo.New("/etc/file.txt").Open(FileMode.Open);
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -91,7 +97,7 @@ public class ScopedFileInfoTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() =>
-			scoped.FileInfo.New("/docs/../etc/passwd").OpenRead());
+		var act = () => scoped.FileInfo.New("/docs/../etc/passwd").OpenRead();
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 }

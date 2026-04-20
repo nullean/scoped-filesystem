@@ -2,6 +2,9 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using System;
+using System.Collections.Generic;
+
 namespace Nullean.ScopedFileSystem;
 
 /// <summary>
@@ -13,7 +16,8 @@ internal sealed record ValidationContext(
 	IReadOnlyList<string> NormalizedRoots,
 	IReadOnlyList<string> ResolvedSpecialFolderPaths,
 	IReadOnlySet<string> AllowedHiddenFileNames,
-	IReadOnlySet<string> AllowedHiddenFolderNames
+	IReadOnlySet<string> AllowedHiddenFolderNames,
+	bool VerboseExceptions = false
 )
 {
 	/// <summary>

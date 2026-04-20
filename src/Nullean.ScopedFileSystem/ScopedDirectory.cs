@@ -4,6 +4,9 @@
 
 #pragma warning disable CA1416
 
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
 using System.Runtime.Versioning;
 

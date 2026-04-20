@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using AwesomeAssertions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -15,7 +16,7 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/docs/readme.md", new MockFileData("hello"));
 
-		Assert.Equal("hello", scoped.File.ReadAllText("/docs/readme.md"));
+		scoped.File.ReadAllText("/docs/readme.md").Should().Be("hello");
 	}
 
 	[Fact]
@@ -24,7 +25,8 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/etc/passwd"));
+		var act = () => scoped.File.ReadAllText("/etc/passwd");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -33,7 +35,8 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllBytes("/etc/passwd"));
+		var act = () => scoped.File.ReadAllBytes("/etc/passwd");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -44,8 +47,8 @@ public class ScopedReadTests
 
 		var lines = scoped.File.ReadAllLines("/docs/lines.txt");
 
-		Assert.Equal(3, lines.Length);
-		Assert.Equal("line1", lines[0]);
+		lines.Should().HaveCount(3);
+		lines[0].Should().Be("line1");
 	}
 
 	[Fact]
@@ -54,7 +57,8 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/hosts", new MockFileData("127.0.0.1 localhost"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllLines("/etc/hosts"));
+		var act = () => scoped.File.ReadAllLines("/etc/hosts");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -63,7 +67,8 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.OpenRead("/etc/passwd"));
+		var act = () => scoped.File.OpenRead("/etc/passwd");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -72,7 +77,8 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.OpenText("/etc/passwd"));
+		var act = () => scoped.File.OpenText("/etc/passwd");
+		act.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -81,8 +87,8 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		await Assert.ThrowsAsync<ScopedFileSystemException>(
-			() => scoped.File.ReadAllTextAsync("/etc/passwd"));
+		var act = async () => await scoped.File.ReadAllTextAsync("/etc/passwd");
+		await act.Should().ThrowAsync<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -91,8 +97,8 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		await Assert.ThrowsAsync<ScopedFileSystemException>(
-			() => scoped.File.ReadAllBytesAsync("/etc/passwd"));
+		var act = async () => await scoped.File.ReadAllBytesAsync("/etc/passwd");
+		await act.Should().ThrowAsync<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -101,9 +107,12 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
 
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.Open("/etc/passwd", FileMode.Open));
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.Open("/etc/passwd", FileMode.Open, FileAccess.Read));
-		Assert.Throws<ScopedFileSystemException>(() => scoped.File.Open("/etc/passwd", FileMode.Open, FileAccess.Write));
+		var act1 = () => scoped.File.Open("/etc/passwd", FileMode.Open);
+		var act2 = () => scoped.File.Open("/etc/passwd", FileMode.Open, FileAccess.Read);
+		var act3 = () => scoped.File.Open("/etc/passwd", FileMode.Open, FileAccess.Write);
+		act1.Should().Throw<ScopedFileSystemException>();
+		act2.Should().Throw<ScopedFileSystemException>();
+		act3.Should().Throw<ScopedFileSystemException>();
 	}
 
 	[Fact]
@@ -112,6 +121,6 @@ public class ScopedReadTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/docs/top.md", new MockFileData("top"));
 
-		Assert.Equal("top", scoped.File.ReadAllText("/docs/top.md"));
+		scoped.File.ReadAllText("/docs/top.md").Should().Be("top");
 	}
 }

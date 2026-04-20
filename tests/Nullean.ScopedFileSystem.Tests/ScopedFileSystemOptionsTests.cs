@@ -2,6 +2,7 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
+using AwesomeAssertions;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
@@ -17,8 +18,8 @@ public class ScopedFileSystemOptionsTests
 	{
 		var options = new ScopedFileSystemOptions("/docs");
 
-		Assert.Single(options.ScopeRoots);
-		Assert.Equal("/docs", options.ScopeRoots.First());
+		options.ScopeRoots.Should().ContainSingle();
+		options.ScopeRoots.First().Should().Be("/docs");
 	}
 
 	[Fact]
@@ -26,14 +27,17 @@ public class ScopedFileSystemOptionsTests
 	{
 		var options = new ScopedFileSystemOptions("/docs", "/data");
 
-		Assert.Equal(2, options.ScopeRoots.Count);
-		Assert.Contains("/docs", options.ScopeRoots);
-		Assert.Contains("/data", options.ScopeRoots);
+		options.ScopeRoots.Should().HaveCount(2);
+		options.ScopeRoots.Should().Contain("/docs");
+		options.ScopeRoots.Should().Contain("/data");
 	}
 
 	[Fact]
-	public void Constructor_NoStringRoots_ThrowsArgumentException() =>
-		Assert.Throws<ArgumentException>(() => new ScopedFileSystemOptions(Array.Empty<string>()));
+	public void Constructor_NoStringRoots_ThrowsArgumentException()
+	{
+		var act = () => new ScopedFileSystemOptions(Array.Empty<string>());
+		act.Should().Throw<ArgumentException>();
+	}
 
 	// ── Constructor: IDirectoryInfo roots ────────────────────────────────────
 
@@ -46,8 +50,8 @@ public class ScopedFileSystemOptionsTests
 
 		var options = new ScopedFileSystemOptions(dirInfo);
 
-		Assert.Single(options.ScopeRoots);
-		Assert.Equal("/docs", options.ScopeRoots.First());
+		options.ScopeRoots.Should().ContainSingle();
+		options.ScopeRoots.First().Should().Be("/docs");
 	}
 
 	[Fact]
@@ -61,13 +65,15 @@ public class ScopedFileSystemOptionsTests
 			mockFs.DirectoryInfo.New("/docs"),
 			mockFs.DirectoryInfo.New("/data"));
 
-		Assert.Equal(2, options.ScopeRoots.Count);
+		options.ScopeRoots.Should().HaveCount(2);
 	}
 
 	[Fact]
-	public void Constructor_NoDirectoryInfoRoots_ThrowsArgumentException() =>
-		Assert.Throws<ArgumentException>(() =>
-			new ScopedFileSystemOptions(Array.Empty<IDirectoryInfo>()));
+	public void Constructor_NoDirectoryInfoRoots_ThrowsArgumentException()
+	{
+		var act = () => new ScopedFileSystemOptions(Array.Empty<IDirectoryInfo>());
+		act.Should().Throw<ArgumentException>();
+	}
 
 	// ── ScopedFileSystem integration ─────────────────────────────────────────
 
@@ -79,7 +85,7 @@ public class ScopedFileSystemOptionsTests
 
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs"));
 
-		Assert.Equal("hello", scoped.File.ReadAllText("/docs/readme.txt"));
+		scoped.File.ReadAllText("/docs/readme.txt").Should().Be("hello");
 	}
 
 	[Fact]
@@ -89,20 +95,79 @@ public class ScopedFileSystemOptionsTests
 		var options = new ScopedFileSystemOptions("/tmp");
 		var scoped = new ScopedFileSystem(options);
 
-		Assert.NotNull(scoped);
+		scoped.Should().NotBeNull();
 	}
 
 	[Fact]
 	public void ScopedFileSystem_Options_DefaultAllowedHiddenFileNamesIsEmpty() =>
-		Assert.Empty(new ScopedFileSystemOptions("/tmp").AllowedHiddenFileNames);
+		new ScopedFileSystemOptions("/tmp").AllowedHiddenFileNames.Should().BeEmpty();
 
 	[Fact]
 	public void ScopedFileSystem_Options_DefaultAllowedHiddenFolderNamesIsEmpty() =>
-		Assert.Empty(new ScopedFileSystemOptions("/tmp").AllowedHiddenFolderNames);
+		new ScopedFileSystemOptions("/tmp").AllowedHiddenFolderNames.Should().BeEmpty();
 
 	[Fact]
 	public void ScopedFileSystem_Options_DefaultAllowedSpecialFoldersIsNone() =>
-		Assert.Equal(AllowedSpecialFolder.None, new ScopedFileSystemOptions("/tmp").AllowedSpecialFolders);
+		new ScopedFileSystemOptions("/tmp").AllowedSpecialFolders.Should().Be(AllowedSpecialFolder.None);
+
+	[Fact]
+	public void ScopedFileSystem_Options_DefaultVerboseExceptionsIsFalse()
+	{
+		Assert.False(new ScopedFileSystemOptions("/tmp").VerboseExceptions);
+	}
+
+	// ── VerboseExceptions ────────────────────────────────────────────────────
+
+	[Fact]
+	public void VerboseExceptions_False_MessageDoesNotIncludeAccessiblePaths()
+	{
+		var mockFs = new MockFileSystem();
+		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { VerboseExceptions = false });
+
+		var ex = Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/etc/passwd"));
+
+		Assert.DoesNotContain("Accessible paths", ex.Message);
+	}
+
+	[Fact]
+	public void VerboseExceptions_True_MessageIncludesScopeRoot()
+	{
+		var mockFs = new MockFileSystem();
+		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { VerboseExceptions = true });
+
+		var ex = Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/etc/passwd"));
+
+		Assert.Contains("Accessible paths", ex.Message);
+		Assert.Contains("/docs", ex.Message);
+	}
+
+	[Fact]
+	public void VerboseExceptions_True_MessageIncludesAllScopeRoots()
+	{
+		var mockFs = new MockFileSystem();
+		mockFs.AddFile("/etc/passwd", new MockFileData("secret"));
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs", "/data") { VerboseExceptions = true });
+
+		var ex = Assert.Throws<ScopedFileSystemException>(() => scoped.File.ReadAllText("/etc/passwd"));
+
+		Assert.Contains("/docs", ex.Message);
+		Assert.Contains("/data", ex.Message);
+	}
+
+	[Fact]
+	public void VerboseExceptions_True_DirectoryAccessOutsideScope_MessageIncludesScopeRoot()
+	{
+		var mockFs = new MockFileSystem();
+		mockFs.AddDirectory("/etc/secret");
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { VerboseExceptions = true });
+
+		var ex = Assert.Throws<ScopedFileSystemException>(() => scoped.Directory.CreateDirectory("/etc/secret"));
+
+		Assert.Contains("Accessible paths", ex.Message);
+		Assert.Contains("/docs", ex.Message);
+	}
 
 	[Fact]
 	public void ScopedFileSystem_DirectoryInfoRoots_WorksWithInner()
@@ -113,6 +178,6 @@ public class ScopedFileSystemOptionsTests
 
 		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions(dirInfo));
 
-		Assert.Equal("hello", scoped.File.ReadAllText("/docs/readme.txt"));
+		scoped.File.ReadAllText("/docs/readme.txt").Should().Be("hello");
 	}
 }
