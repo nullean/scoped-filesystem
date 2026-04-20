@@ -42,7 +42,7 @@ namespace Nullean.ScopedFileSystem
     /// Wraps a <see cref="HashSet{T}"/> to implement the <see cref="System.Collections.Generic.IReadOnlySet{T}"/>
     /// polyfill on netstandard2.0 and netstandard2.1 targets where <c>HashSet{T}</c> does not yet declare that interface.
     /// </summary>
-    internal sealed class ReadOnlySetWrapper<T> : System.Collections.Generic.IReadOnlySet<T>
+    internal sealed class ReadOnlySetWrapper<T> : IReadOnlySet<T>
     {
         private readonly HashSet<T> _inner;
 

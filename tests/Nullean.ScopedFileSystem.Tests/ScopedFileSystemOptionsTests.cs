@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information
 
 using AwesomeAssertions;
+using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using Xunit;
 
@@ -70,7 +71,7 @@ public class ScopedFileSystemOptionsTests
 	[Fact]
 	public void Constructor_NoDirectoryInfoRoots_ThrowsArgumentException()
 	{
-		var act = () => new ScopedFileSystemOptions(Array.Empty<System.IO.Abstractions.IDirectoryInfo>());
+		var act = () => new ScopedFileSystemOptions(Array.Empty<IDirectoryInfo>());
 		act.Should().Throw<ArgumentException>();
 	}
 
