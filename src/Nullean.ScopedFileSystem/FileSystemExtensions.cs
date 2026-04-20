@@ -61,7 +61,7 @@ public static class FileSystemExtensions
 #if NET6_0_OR_GREATER
         if (directory is { Exists: true, LinkTarget: not null })
 #else
-        if (directory.Exists && new DirectoryInfo(directory.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+        if (directory.Exists && directory.FileSystem.DirectoryInfo.New(directory.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
         {
             error = "path must not point to a symlink";
@@ -83,7 +83,7 @@ public static class FileSystemExtensions
 #if NET6_0_OR_GREATER
             if (dir is { Exists: true, LinkTarget: not null })
 #else
-            if (dir.Exists && new DirectoryInfo(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+            if (dir.Exists && dir.FileSystem.DirectoryInfo.New(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
             {
                 error = "path must not traverse symlinked directories";
@@ -110,7 +110,7 @@ public static class FileSystemExtensions
 #if NET6_0_OR_GREATER
         if (file is { Exists: true, LinkTarget: not null })
 #else
-        if (file.Exists && new FileInfo(file.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+        if (file.Exists && file.FileSystem.FileInfo.New(file.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
         {
             error = "path must not point to a symlink";
@@ -132,7 +132,7 @@ public static class FileSystemExtensions
 #if NET6_0_OR_GREATER
             if (dir is { Exists: true, LinkTarget: not null })
 #else
-            if (dir.Exists && new DirectoryInfo(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+            if (dir.Exists && dir.FileSystem.DirectoryInfo.New(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
             {
                 error = "path must not traverse symlinked directories";
