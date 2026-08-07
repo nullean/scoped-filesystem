@@ -72,6 +72,16 @@ public static class FileSystemExtensions
             ? StringComparison.Ordinal
             : StringComparison.OrdinalIgnoreCase;
 
+        // When directory IS the scope root there are no ancestors between them to validate.
+        // Without this guard, `directory.Parent` starts above the scope root and the loop walks
+        // the entire filesystem tree above it, incorrectly flagging hidden ancestor directories
+        // (e.g. ~/.supacode) that are outside the scope and irrelevant to access control.
+        if (string.Equals(directory.FullName, docRoot.FullName, cmp))
+        {
+            error = null;
+            return true;
+        }
+
         var dir = directory.Parent;
         while (dir != null && !string.Equals(dir.FullName, docRoot.FullName, cmp))
         {
