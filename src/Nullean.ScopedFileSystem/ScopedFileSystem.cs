@@ -114,4 +114,8 @@ public class ScopedFileSystem : IFileSystem
 	public IFileStreamFactory FileStream => _inner.FileStream;
 	public IFileSystemWatcherFactory FileSystemWatcher => _inner.FileSystemWatcher;
 	public IFileVersionInfoFactory FileVersionInfo => _inner.FileVersionInfo;
+#if NET9_0_OR_GREATER
+	// RandomAccess only operates on handles that were already opened through the scoped File, so it needs no path validation.
+	public IRandomAccess RandomAccess => _inner.RandomAccess;
+#endif
 }
