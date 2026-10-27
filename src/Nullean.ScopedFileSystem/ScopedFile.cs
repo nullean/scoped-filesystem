@@ -174,6 +174,20 @@ internal class ScopedFile(IFile inner, IFileSystem innerFs, ValidationContext ct
 	}
 #endif
 
+#if NET9_0_OR_GREATER
+	public SafeFileHandle OpenHandle(
+		string path,
+		FileMode mode = FileMode.Open,
+		FileAccess access = FileAccess.Read,
+		FileShare share = FileShare.Read,
+		FileOptions options = FileOptions.None,
+		long preallocationSize = 0)
+	{
+		Validate(path);
+		return inner.OpenHandle(path, mode, access, share, options, preallocationSize);
+	}
+#endif
+
 	// ── Scoped: Write / mutate methods ───────────────────────────────────────
 
 #if NET8_0_OR_GREATER
