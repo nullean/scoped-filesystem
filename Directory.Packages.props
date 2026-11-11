@@ -22,10 +22,8 @@
 
   <!-- build/scripts -->
   <ItemGroup>
-    <PackageVersion Include="Argu" Version="6.0.0" />
-    <PackageVersion Include="Bullseye" Version="6.0.0" />
-    <PackageVersion Include="Fake.Tools.Git" Version="5.15.0" />
-    <PackageVersion Include="FSharp.Core" Version="10.1.201" />
-    <PackageVersion Include="Proc" Version="0.9.1" />
+    <!-- Nullean.Make.Fs needs FSharp.Core 11.0.100 or later; it brings Proc and Proc.Fs -->
+    <PackageVersion Include="FSharp.Core" Version="11.0.100" />
+    <PackageVersion Include="Nullean.Make.Fs" Version="0.25.0" />
   </ItemGroup>
 </Project>

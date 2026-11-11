@@ -1,33 +1,40 @@
 module Program
 
-open Argu
-open Bullseye
-open ProcNet
-open CommandLine
+open Nullean.Make.Fs
+open Proc.Fs
+
+/// The build's targets; `dotnet run --project build/scripts -- --help` lists them with these descriptions
+type Target =
+    /// clean known output locations
+    | Clean
+    /// Run build
+    | Build
+    /// Runs build then tests
+    | Test
+    /// Runs build, then creates and validates the packages and reports public API changes
+    | Pack
+    /// Runs tests, then creates and validates the packages: exactly what CI runs
+    | Ci
+    /// Pack the NuGet packages into build/output
+    | GeneratePackages
+    /// Validate the packed NuGet packages
+    | ValidatePackages
+    /// Report public API changes against the previous release
+    | GenerateApiChanges
 
 [<EntryPoint>]
 let main argv =
-    let parser = ArgumentParser.Create<Arguments>(programName = "dotnet run --project build/scripts --")
-    let parsed =
-        try
-            let parsed = parser.ParseCommandLine(inputs = argv, raiseOnUsage = true)
-            let arguments = parsed.GetSubCommand()
-            Some (parsed, arguments)
-        with e ->
-            printfn "%s" e.Message
-            None
+    let app = MakeApp<Target>("dotnet run --project build/scripts --", None)
 
-    match parsed with
-    | None -> 2
-    | Some (parsed, arguments) ->
+    // `-s` skips what a target `requires`, never what it `composes`: build always cleans first
+    app.Bind <| function
+        | Clean -> target [] { Targets.clean () }
+        | Build -> command { composes [Clean]; executes (Targets.build ()) }
+        | Test -> target [Build] { Targets.test () }
+        | Pack -> command { requires [Build]; composes [GeneratePackages; ValidatePackages; GenerateApiChanges] }
+        | Ci -> command { requires [Test]; composes [GeneratePackages; ValidatePackages; GenerateApiChanges] }
+        | GeneratePackages -> target [] { Targets.generatePackages () }
+        | ValidatePackages -> target [] { Targets.validatePackages () }
+        | GenerateApiChanges -> target [] { Targets.generateApiChanges () }
 
-        let target = arguments.Name
-
-        Targets.Setup parsed arguments
-        let swallowTypes = [typeof<ProcExecException>; typeof<ExceptionExiter>]
-
-        task {
-            return! Targets.RunTargetsAndExitAsync([ target ], (fun e -> swallowTypes |> List.contains (e.GetType())), (fun _ -> ":"), null, null)
-        } |> Async.AwaitTask |> Async.RunSynchronously
-        0
-
+    app.RunAsync(argv).GetAwaiter().GetResult()
