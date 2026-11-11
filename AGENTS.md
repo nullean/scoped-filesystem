@@ -48,3 +48,5 @@ skills have the details. Every pull request carries exactly one release label. P
 - The packed skill is written from the code, and every snippet in it must compile: update it with the public API.
 - Package validation runs on pack. `CompatibilitySuppressions.xml` records the one known difference between target
   frameworks; do not add to it to silence a new break.
+- Build targets are Make.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
+  lines; values come from `text`/`lines` inside `shell { }`. Do not call the C# `ProcNet` API from the build.

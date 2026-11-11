@@ -12,7 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Paths.fs" />
-    <Compile Include="Targets.fs" />
+    <Compile Include="Versions.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>
