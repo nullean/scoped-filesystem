@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
+<!--
+  The netstandard builds declare a public IReadOnlySet<T> polyfill (Polyfills.cs) because the public
+  FileSystemExtensions.TryValidateSymlinkAccess overloads take one; net9.0 uses the BCL's. This predates package
+  validation and removing it changes public API, so it is suppressed here rather than fixed in passing.
+-->
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:System.Collections.Generic.IReadOnlySet`1</Target>
+    <Left>lib/netstandard2.1/Nullean.ScopedFileSystem.dll</Left>
+    <Right>lib/net9.0/Nullean.ScopedFileSystem.dll</Right>
+  </Suppression>
+</Suppressions>
