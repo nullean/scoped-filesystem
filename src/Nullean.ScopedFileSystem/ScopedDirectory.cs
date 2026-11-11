@@ -20,16 +20,13 @@ internal class ScopedDirectory(IDirectory inner, IFileSystem innerFs, Validation
 {
 	public IFileSystem FileSystem => innerFs;
 
-	private void Validate(string path) =>
-		PathValidator.ValidateDirectoryPath(path, ctx, innerFs);
+	private void Validate(string path) => PathValidator.ValidateDirectoryPath(path, ctx, innerFs);
 
-	private bool InScope(string path) =>
-		PathValidator.IsInScope(path, ctx, innerFs);
+	private bool InScope(string path) => PathValidator.IsInScope(path, ctx, innerFs);
 
 	// ── Exists (graceful) ────────────────────────────────────────────────────
 
-	public bool Exists([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path) =>
-		path != null && InScope(path) && inner.Exists(path);
+	public bool Exists([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path) => path != null && InScope(path) && inner.Exists(path);
 
 	// ── Create / Delete / Move ───────────────────────────────────────────────
 

@@ -34,34 +34,41 @@ public class ScopedFileSystem : IFileSystem
 	/// <summary>
 	/// Initialises a <see cref="ScopedFileSystem"/> with an explicit inner filesystem and full options.
 	/// </summary>
-	public ScopedFileSystem(IFileSystem inner, ScopedFileSystemOptions options)
-		: this(inner, options.ScopeRoots, options.AllowedHiddenFileNames, options.AllowedHiddenFolderNames, options.AllowedSpecialFolders, options.VerboseExceptions) { }
+	public ScopedFileSystem(IFileSystem inner, ScopedFileSystemOptions options) : this(
+			inner,
+			options.ScopeRoots,
+			options.AllowedHiddenFileNames,
+			options.AllowedHiddenFolderNames,
+			options.AllowedSpecialFolders,
+			options.VerboseExceptions
+		)
+	{ }
 
 	/// <summary>
 	/// Initialises a <see cref="ScopedFileSystem"/> using <see cref="FileSystem"/> as the inner filesystem.
 	/// </summary>
-	public ScopedFileSystem(ScopedFileSystemOptions options)
-		: this(new FileSystem(), options) { }
+	public ScopedFileSystem(ScopedFileSystemOptions options) : this(new FileSystem(), options)
+	{ }
 
 	// ── Convenience overloads ─────────────────────────────────────────────────
 
 	/// <summary>Initialises a scoped filesystem rooted at <paramref name="scopeRoot"/>.</summary>
-	public ScopedFileSystem(IFileSystem inner, IDirectoryInfo scopeRoot)
-		: this(inner, new ScopedFileSystemOptions(scopeRoot.FullName)) { }
+	public ScopedFileSystem(IFileSystem inner, IDirectoryInfo scopeRoot) : this(inner, new ScopedFileSystemOptions(scopeRoot.FullName))
+	{ }
 
 	/// <summary>Initialises a scoped filesystem rooted at <paramref name="scopeRoot"/> using the real filesystem.</summary>
-	public ScopedFileSystem(IDirectoryInfo scopeRoot)
-		: this(new FileSystem(), scopeRoot) { }
+	public ScopedFileSystem(IDirectoryInfo scopeRoot) : this(new FileSystem(), scopeRoot)
+	{ }
 
 	/// <summary>Initialises a scoped filesystem with one or more explicit scope roots.</summary>
 	/// <exception cref="ArgumentException">Thrown when fewer than one root is supplied or any root is an ancestor of another.</exception>
-	public ScopedFileSystem(IFileSystem inner, params string[] scopeRoots)
-		: this(inner, new ScopedFileSystemOptions(scopeRoots)) { }
+	public ScopedFileSystem(IFileSystem inner, params string[] scopeRoots) : this(inner, new ScopedFileSystemOptions(scopeRoots))
+	{ }
 
 	/// <summary>Initialises a scoped filesystem with one or more scope roots using the real filesystem.</summary>
 	/// <exception cref="ArgumentException">Thrown when fewer than one root is supplied or any root is an ancestor of another.</exception>
-	public ScopedFileSystem(params string[] scopeRoots)
-		: this(new FileSystem(), scopeRoots) { }
+	public ScopedFileSystem(params string[] scopeRoots) : this(new FileSystem(), scopeRoots)
+	{ }
 
 	// ── Core constructor ──────────────────────────────────────────────────────
 
@@ -71,17 +78,17 @@ public class ScopedFileSystem : IFileSystem
 		IReadOnlyCollection<string> allowedHiddenFileNames,
 		IReadOnlyCollection<string> allowedHiddenFolderNames,
 		AllowedSpecialFolder allowedSpecialFolders,
-		bool verboseExceptions = false)
+		bool verboseExceptions = false
+	)
 	{
 		if (inner is ScopedFileSystem)
 			throw new ArgumentException("Cannot wrap a ScopedFileSystem inside another ScopedFileSystem.", nameof(inner));
 
 		_inner = inner;
 
-		var normalized = scopeRoots
-			.Select(r => _inner.Path.GetFullPath(r)
-				.TrimEnd(_inner.Path.DirectorySeparatorChar, _inner.Path.AltDirectorySeparatorChar))
-			.ToArray();
+		var normalized = scopeRoots.Select(
+			r => _inner.Path.GetFullPath(r).TrimEnd(_inner.Path.DirectorySeparatorChar, _inner.Path.AltDirectorySeparatorChar)
+		).ToArray();
 
 		PathValidator.ValidateRootsAreDisjoint(normalized, _inner);
 

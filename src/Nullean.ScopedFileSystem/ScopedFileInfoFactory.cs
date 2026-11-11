@@ -15,9 +15,7 @@ internal class ScopedFileInfoFactory(IFileInfoFactory inner, IFileSystem innerFs
 {
 	public IFileSystem FileSystem => innerFs;
 
-	public IFileInfo New(string fileName) =>
-		new ScopedFileInfo(inner.New(fileName), innerFs, ctx);
+	public IFileInfo New(string fileName) => new ScopedFileInfo(inner.New(fileName), innerFs, ctx);
 
-	public IFileInfo? Wrap(FileInfo? fileInfo) =>
-		fileInfo is null ? null : new ScopedFileInfo(inner.Wrap(fileInfo)!, innerFs, ctx);
+	public IFileInfo? Wrap(FileInfo? fileInfo) => fileInfo is null ? null : new ScopedFileInfo(inner.Wrap(fileInfo)!, innerFs, ctx);
 }

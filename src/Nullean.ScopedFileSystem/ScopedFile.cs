@@ -31,16 +31,13 @@ internal class ScopedFile(IFile inner, IFileSystem innerFs, ValidationContext ct
 
 	// ── Validation helpers ───────────────────────────────────────────────────
 
-	private void Validate(string path) =>
-		PathValidator.ValidatePath(path, ctx, innerFs);
+	private void Validate(string path) => PathValidator.ValidatePath(path, ctx, innerFs);
 
-	private bool InScope(string path) =>
-		PathValidator.IsInScope(path, ctx, innerFs);
+	private bool InScope(string path) => PathValidator.IsInScope(path, ctx, innerFs);
 
 	// ── Scoped: Exists (graceful, no throw) ──────────────────────────────────
 
-	public bool Exists(string? path) =>
-		path != null && InScope(path) && inner.Exists(path);
+	public bool Exists(string? path) => path != null && InScope(path) && inner.Exists(path);
 
 	// ── Scoped: Read methods ─────────────────────────────────────────────────
 

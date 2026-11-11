@@ -11,13 +11,11 @@ namespace Nullean.ScopedFileSystem;
 /// An <see cref="IDirectoryInfoFactory"/> decorator that returns <see cref="ScopedDirectoryInfo"/> instances
 /// so that all directory operations are subject to scope and symlink validation.
 /// </summary>
-internal class ScopedDirectoryInfoFactory(IDirectoryInfoFactory inner, IFileSystem innerFs, ValidationContext ctx)
-	: IDirectoryInfoFactory
+internal class ScopedDirectoryInfoFactory(IDirectoryInfoFactory inner, IFileSystem innerFs, ValidationContext ctx) : IDirectoryInfoFactory
 {
 	public IFileSystem FileSystem => innerFs;
 
-	public IDirectoryInfo New(string path) =>
-		new ScopedDirectoryInfo(inner.New(path), innerFs, ctx);
+	public IDirectoryInfo New(string path) => new ScopedDirectoryInfo(inner.New(path), innerFs, ctx);
 
 	public IDirectoryInfo? Wrap(DirectoryInfo? directoryInfo) =>
 		directoryInfo is null ? null : new ScopedDirectoryInfo(inner.Wrap(directoryInfo)!, innerFs, ctx);

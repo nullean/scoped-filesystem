@@ -2,9 +2,9 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
-using AwesomeAssertions;
 using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
+using AwesomeAssertions;
 using Xunit;
 
 namespace Nullean.ScopedFileSystem.Tests;
@@ -61,9 +61,7 @@ public class ScopedFileSystemOptionsTests
 		mockFs.AddDirectory("/docs");
 		mockFs.AddDirectory("/data");
 
-		var options = new ScopedFileSystemOptions(
-			mockFs.DirectoryInfo.New("/docs"),
-			mockFs.DirectoryInfo.New("/data"));
+		var options = new ScopedFileSystemOptions(mockFs.DirectoryInfo.New("/docs"), mockFs.DirectoryInfo.New("/data"));
 
 		options.ScopeRoots.Should().HaveCount(2);
 	}

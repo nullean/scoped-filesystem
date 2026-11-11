@@ -9,5 +9,6 @@ namespace Nullean.ScopedFileSystem;
 /// <summary>Thrown when a file access operation attempts to read outside the configured scope root.</summary>
 public class ScopedFileSystemException : SecurityException
 {
-	public ScopedFileSystemException(string message) : base(message) { }
+	public ScopedFileSystemException(string message) : base(message)
+	{ }
 }

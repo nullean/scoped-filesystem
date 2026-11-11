@@ -2,21 +2,19 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
-using AwesomeAssertions;
 using System.IO.Abstractions.TestingHelpers;
+using AwesomeAssertions;
 using Xunit;
 
 namespace Nullean.ScopedFileSystem.Tests;
 
 public class SpecialFolderTests
 {
-	private static string TrimSep(string path) =>
-		path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+	private static string TrimSep(string path) => path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
 	private static string TempRoot => TrimSep(Path.GetTempPath());
 
-	private static string AppDataRoot =>
-		TrimSep(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+	private static string AppDataRoot => TrimSep(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
 
 	// ── Temp folder ──────────────────────────────────────────────────────────
 
@@ -26,10 +24,7 @@ public class SpecialFolderTests
 		var tempFile = $"{TempRoot}/scoped-test.txt";
 		var mockFs = new MockFileSystem();
 		mockFs.AddFile(tempFile, new MockFileData("temp content"));
-		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
-		{
-			AllowedSpecialFolders = AllowedSpecialFolder.Temp,
-		});
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { AllowedSpecialFolders = AllowedSpecialFolder.Temp, });
 
 		scoped.File.ReadAllText(tempFile).Should().Be("temp content");
 	}
@@ -40,10 +35,7 @@ public class SpecialFolderTests
 		var tempFile = $"{TempRoot}/scoped-write-test.txt";
 		var mockFs = new MockFileSystem();
 		mockFs.AddDirectory(TempRoot);
-		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
-		{
-			AllowedSpecialFolders = AllowedSpecialFolder.Temp,
-		});
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { AllowedSpecialFolders = AllowedSpecialFolder.Temp, });
 
 		scoped.File.WriteAllText(tempFile, "written");
 
@@ -68,10 +60,7 @@ public class SpecialFolderTests
 		var tempFile = $"{TempRoot}/scoped-exists-test.txt";
 		var mockFs = new MockFileSystem();
 		mockFs.AddFile(tempFile, new MockFileData("x"));
-		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
-		{
-			AllowedSpecialFolders = AllowedSpecialFolder.Temp,
-		});
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { AllowedSpecialFolders = AllowedSpecialFolder.Temp, });
 
 		scoped.File.Exists(tempFile).Should().BeTrue();
 	}
@@ -100,10 +89,10 @@ public class SpecialFolderTests
 		var mockFs = new MockFileSystem();
 		mockFs.AddFile(tempFile, new MockFileData("from temp"));
 		mockFs.AddFile(appDataFile, new MockFileData("from appdata"));
-		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
-		{
-			AllowedSpecialFolders = AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData,
-		});
+		var scoped = new ScopedFileSystem(
+			mockFs,
+			new ScopedFileSystemOptions("/docs") { AllowedSpecialFolders = AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData, }
+		);
 
 		scoped.File.ReadAllText(tempFile).Should().Be("from temp");
 		scoped.File.ReadAllText(appDataFile).Should().Be("from appdata");
@@ -115,10 +104,7 @@ public class SpecialFolderTests
 		var tempFile = $"{TempRoot}/all-test.txt";
 		var mockFs = new MockFileSystem();
 		mockFs.AddFile(tempFile, new MockFileData("temp"));
-		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
-		{
-			AllowedSpecialFolders = AllowedSpecialFolder.All,
-		});
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { AllowedSpecialFolders = AllowedSpecialFolder.All, });
 
 		scoped.File.ReadAllText(tempFile).Should().Be("temp");
 	}
@@ -131,10 +117,7 @@ public class SpecialFolderTests
 		var hiddenFile = $"{TempRoot}/.hidden-config";
 		var mockFs = new MockFileSystem();
 		mockFs.AddFile(hiddenFile, new MockFileData("hidden in temp"));
-		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs")
-		{
-			AllowedSpecialFolders = AllowedSpecialFolder.Temp,
-		});
+		var scoped = new ScopedFileSystem(mockFs, new ScopedFileSystemOptions("/docs") { AllowedSpecialFolders = AllowedSpecialFolder.Temp, });
 
 		scoped.File.ReadAllText(hiddenFile).Should().Be("hidden in temp");
 	}

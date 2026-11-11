@@ -22,8 +22,9 @@ mise installs the SDK pinned in `global.json` (plus the net10.0 runtime the test
 mise run build    # build the solution
 mise run test     # build, then run the tests
 mise run pack     # build, pack, validate the packages, report public API changes
-mise run ci       # exactly what CI runs
-mise run check    # workflow security checks (zizmor)
+mise run ci       # exactly what CI runs: the curb check, test, pack
+mise run format   # format the repository with curb
+mise run check    # formatting drift (curb) and workflow security checks (zizmor)
 mise run clean    # delete build output
 mise run release  # show the release draft; `mise run release publish` releases
 ```
@@ -50,3 +51,5 @@ skills have the details. Every pull request carries exactly one release label. P
   frameworks; do not add to it to silence a new break.
 - Build targets are Make.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
   lines; values come from `text`/`lines` inside `shell { }`. Do not call the C# `ProcNet` API from the build.
+- Formatting is curb's, from `.editorconfig` (the nullean template, identical in every repo): run `mise run format`
+  before committing C#. CI fails on drift. See the [format](.claude/skills/format/SKILL.md) skill.

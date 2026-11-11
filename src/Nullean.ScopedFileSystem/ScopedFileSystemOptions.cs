@@ -45,11 +45,8 @@ public sealed record ScopedFileSystemOptions
 	/// Initialises options with one or more scope root paths supplied as <see cref="IDirectoryInfo"/> instances.
 	/// </summary>
 	/// <exception cref="ArgumentException">Thrown when no roots are provided.</exception>
-	public ScopedFileSystemOptions(params IDirectoryInfo[] scopeRoots)
-		: this(scopeRoots.Length == 0
-			? []
-			: scopeRoots.Select(d => d.FullName).ToArray()
-		) { }
+	public ScopedFileSystemOptions(params IDirectoryInfo[] scopeRoots) : this(scopeRoots.Length == 0 ? [] : scopeRoots.Select(d => d.FullName).ToArray())
+	{ }
 
 	/// <summary>
 	/// The root directory paths that scope all file and directory access.
