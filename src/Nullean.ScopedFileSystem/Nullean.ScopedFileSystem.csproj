@@ -9,17 +9,11 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\build\keys\keypair.snk</AssemblyOriginatorKeyFile>
 
-    <PackageIcon>nuget-icon.png</PackageIcon>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/nullean/scoped-filesystem</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/nullean/scoped-filesystem</PackageProjectUrl>
-    <PackageReleaseNotes>https://github.com/nullean/scoped-filesystem/releases</PackageReleaseNotes>
-
     <PackageId>Nullean.ScopedFileSystem</PackageId>
     <Title>Nullean.ScopedFileSystem - A scoped IFileSystem decorator</Title>
     <Description>A System.IO.Abstractions IFileSystem decorator that restricts file read and write operations to one or more configured scope roots and rejects symbolic links.</Description>
+    <PackageTags>filesystem;io;abstractions;sandbox;security;path-traversal;symlink</PackageTags>
 
-    <PackageReadmeFile>README.md</PackageReadmeFile>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -28,15 +22,12 @@
     <EnableTrimAnalyzer Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</EnableTrimAnalyzer>
   </PropertyGroup>
 
+  <!-- the repository README is this package's README; Directory.Build.props only packs one next to the project -->
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
   <ItemGroup>
-    <Content Include="..\..\README.md" Pack="true" PackagePath="README.md" CopyToOutputDirectory="PreserveNewest">
-      <Link>README.md</Link>
-    </Content>
-    <Content Include="..\..\nuget-icon.png" CopyToOutputDirectory="PreserveNewest">
-      <Link>nuget-icon.png</Link>
-      <Pack>True</Pack>
-      <PackagePath>nuget-icon.png</PackagePath>
-    </Content>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

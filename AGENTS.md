@@ -9,6 +9,7 @@ Violations throw `ScopedFileSystemException`.
 | Path | What |
 |---|---|
 | `src/Nullean.ScopedFileSystem` | the library (netstandard2.0, netstandard2.1, net9.0, net10.0), strong-named |
+| `src/Nullean.ScopedFileSystem/skills` | the agent skill packed into the package (`skills/scoped-filesystem/SKILL.md`) |
 | `tests/Nullean.ScopedFileSystem.Tests` | xUnit tests, on net10.0 |
 | `build/scripts` | the F# build the `mise` tasks call |
 | `build/keys` | the strong-name key pair |
@@ -35,3 +36,7 @@ mise run clean    # delete build output
 - The library depends only on `System.IO.Abstractions`. Do not add package references to `src/Nullean.ScopedFileSystem`.
 - It is AOT- and trim-compatible on net8.0+ (`IsAotCompatible`); keep it free of reflection the analyzers flag.
 - Package versions live in `Directory.Packages.props` (Central Package Management), never on a `PackageReference`.
+- Package metadata lives in `Directory.Build.props`; the project file keeps only id, title, description and tags.
+- The packed skill is written from the code, and every snippet in it must compile: update it with the public API.
+- Package validation runs on pack. `CompatibilitySuppressions.xml` records the one known difference between target
+  frameworks; do not add to it to silence a new break.
