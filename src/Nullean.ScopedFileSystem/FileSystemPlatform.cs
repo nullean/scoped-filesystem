@@ -9,11 +9,11 @@ namespace Nullean.ScopedFileSystem;
 /// <summary>Provides platform-level filesystem characteristics.</summary>
 public static class FileSystemPlatform
 {
-    /// <summary>Returns true when running on a case-sensitive filesystem (Linux).</summary>
-    public static bool IsCaseSensitiveFileSystem { get; } =
+	/// <summary>Returns true when running on a case-sensitive filesystem (Linux).</summary>
+	public static bool IsCaseSensitiveFileSystem { get; } =
 #if NET5_0_OR_GREATER
         OperatingSystem.IsLinux();
 #else
-        System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux);
+	System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux);
 #endif
 }

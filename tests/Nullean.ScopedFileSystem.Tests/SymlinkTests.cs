@@ -2,8 +2,8 @@
 // Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
 // See the LICENSE file in the project root for more information
 
-using AwesomeAssertions;
 using System.IO.Abstractions.TestingHelpers;
+using AwesomeAssertions;
 using Xunit;
 
 namespace Nullean.ScopedFileSystem.Tests;
@@ -58,7 +58,7 @@ public class SymlinkTests
 		var (mockFs, scoped) = Setup.Create("/docs");
 		mockFs.AddFile("/docs/link.md", new MockFileData("") { LinkTarget = "/etc/passwd" });
 
-			var act = () => scoped.FileInfo.New("/docs/link.md").OpenRead();
+		var act = () => scoped.FileInfo.New("/docs/link.md").OpenRead();
 		act.Should().Throw<ScopedFileSystemException>();
 	}
 }

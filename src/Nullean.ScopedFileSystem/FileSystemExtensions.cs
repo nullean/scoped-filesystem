@@ -12,145 +12,139 @@ namespace Nullean.ScopedFileSystem;
 /// <summary>Extension methods for filesystem path validation.</summary>
 public static class FileSystemExtensions
 {
-    /// <summary>Returns true when <paramref name="file"/> resides inside <paramref name="parentDirectory"/>.</summary>
-    public static bool IsSubPathOf(this IFileInfo file, IDirectoryInfo parentDirectory)
-    {
-        var parent = file.Directory;
-        return parent is not null && parent.IsSubPathOf(parentDirectory);
-    }
+	/// <summary>Returns true when <paramref name="file"/> resides inside <paramref name="parentDirectory"/>.</summary>
+	public static bool IsSubPathOf(this IFileInfo file, IDirectoryInfo parentDirectory)
+	{
+		var parent = file.Directory;
+		return parent is not null && parent.IsSubPathOf(parentDirectory);
+	}
 
-    /// <summary>Returns true when <paramref name="directory"/> is <paramref name="parentDirectory"/> or a subdirectory of it.</summary>
-    public static bool IsSubPathOf(this IDirectoryInfo directory, IDirectoryInfo parentDirectory)
-    {
-        var cmp = FileSystemPlatform.IsCaseSensitiveFileSystem
-            ? StringComparison.Ordinal
-            : StringComparison.OrdinalIgnoreCase;
-        var current = directory;
-        do
-        {
-            if (string.Equals(current.FullName, parentDirectory.FullName, cmp))
-                return true;
-            current = current.Parent;
-        } while (current != null);
-        return false;
-    }
+	/// <summary>Returns true when <paramref name="directory"/> is <paramref name="parentDirectory"/> or a subdirectory of it.</summary>
+	public static bool IsSubPathOf(this IDirectoryInfo directory, IDirectoryInfo parentDirectory)
+	{
+		var cmp = FileSystemPlatform.IsCaseSensitiveFileSystem ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+		var current = directory;
+		do
+		{
+			if (string.Equals(current.FullName, parentDirectory.FullName, cmp))
+				return true;
+			current = current.Parent;
+		}
+		while (current != null);
+		return false;
+	}
 
-    /// <summary>
-    /// Validates that <paramref name="file"/> is not a symlink and that no ancestor directory
-    /// between <paramref name="file"/> and <paramref name="docRoot"/> is a symlink or hidden.
-    /// Returns true if access is valid; false with a non-null <paramref name="error"/> describing the violation.
-    /// </summary>
-    public static bool TryValidateSymlinkAccess(
-        this IFileInfo file,
-        IDirectoryInfo docRoot,
-        [NotNullWhen(false)] out string? error) =>
-        file.TryValidateSymlinkAccess(docRoot, allowedHiddenFolderNames: null, out error);
+	/// <summary>
+	/// Validates that <paramref name="file"/> is not a symlink and that no ancestor directory
+	/// between <paramref name="file"/> and <paramref name="docRoot"/> is a symlink or hidden.
+	/// Returns true if access is valid; false with a non-null <paramref name="error"/> describing the violation.
+	/// </summary>
+	public static bool TryValidateSymlinkAccess(this IFileInfo file, IDirectoryInfo docRoot, [NotNullWhen(false)] out string? error) =>
+		file.TryValidateSymlinkAccess(docRoot, allowedHiddenFolderNames: null, out error);
 
-    /// <summary>
-    /// Validates that <paramref name="directory"/> is not a symlink and that no ancestor directory
-    /// between <paramref name="directory"/> and <paramref name="docRoot"/> is a symlink or hidden
-    /// (unless its name is present in <paramref name="allowedHiddenFolderNames"/>).
-    /// Returns true if access is valid; false with a non-null <paramref name="error"/> describing the violation.
-    /// </summary>
-    public static bool TryValidateSymlinkAccess(
-        this IDirectoryInfo directory,
-        IDirectoryInfo docRoot,
-        IReadOnlySet<string>? allowedHiddenFolderNames,
-        [NotNullWhen(false)] out string? error)
-    {
+	/// <summary>
+	/// Validates that <paramref name="directory"/> is not a symlink and that no ancestor directory
+	/// between <paramref name="directory"/> and <paramref name="docRoot"/> is a symlink or hidden
+	/// (unless its name is present in <paramref name="allowedHiddenFolderNames"/>).
+	/// Returns true if access is valid; false with a non-null <paramref name="error"/> describing the violation.
+	/// </summary>
+	public static bool TryValidateSymlinkAccess(
+		this IDirectoryInfo directory,
+		IDirectoryInfo docRoot,
+		IReadOnlySet<string>? allowedHiddenFolderNames,
+		[NotNullWhen(false)] out string? error
+	)
+	{
 #if NET6_0_OR_GREATER
         if (directory is { Exists: true, LinkTarget: not null })
 #else
-        if (directory.Exists && directory.FileSystem.DirectoryInfo.New(directory.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+		if (directory.Exists && directory.FileSystem.DirectoryInfo.New(directory.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
-        {
-            error = "path must not point to a symlink";
-            return false;
-        }
+		{
+			error = "path must not point to a symlink";
+			return false;
+		}
 
-        var cmp = FileSystemPlatform.IsCaseSensitiveFileSystem
-            ? StringComparison.Ordinal
-            : StringComparison.OrdinalIgnoreCase;
+		var cmp = FileSystemPlatform.IsCaseSensitiveFileSystem ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
-        // When directory IS the scope root there are no ancestors between them to validate.
-        // Without this guard, `directory.Parent` starts above the scope root and the loop walks
-        // the entire filesystem tree above it, incorrectly flagging hidden ancestor directories
-        // (e.g. ~/.supacode) that are outside the scope and irrelevant to access control.
-        if (string.Equals(directory.FullName, docRoot.FullName, cmp))
-        {
-            error = null;
-            return true;
-        }
+		// When directory IS the scope root there are no ancestors between them to validate.
+		// Without this guard, `directory.Parent` starts above the scope root and the loop walks
+		// the entire filesystem tree above it, incorrectly flagging hidden ancestor directories
+		// (e.g. ~/.supacode) that are outside the scope and irrelevant to access control.
+		if (string.Equals(directory.FullName, docRoot.FullName, cmp))
+		{
+			error = null;
+			return true;
+		}
 
-        var dir = directory.Parent;
-        while (dir != null && !string.Equals(dir.FullName, docRoot.FullName, cmp))
-        {
-            if (dir.Name.StartsWith(".") && (allowedHiddenFolderNames is null || !allowedHiddenFolderNames.Contains(dir.Name)))
-            {
-                error = "path must not traverse hidden directories";
-                return false;
-            }
+		var dir = directory.Parent;
+		while (dir != null && !string.Equals(dir.FullName, docRoot.FullName, cmp))
+		{
+			if (dir.Name.StartsWith(".") && (allowedHiddenFolderNames is null || !allowedHiddenFolderNames.Contains(dir.Name)))
+			{
+				error = "path must not traverse hidden directories";
+				return false;
+			}
 #if NET6_0_OR_GREATER
             if (dir is { Exists: true, LinkTarget: not null })
 #else
-            if (dir.Exists && dir.FileSystem.DirectoryInfo.New(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+			if (dir.Exists && dir.FileSystem.DirectoryInfo.New(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
-            {
-                error = "path must not traverse symlinked directories";
-                return false;
-            }
-            dir = dir.Parent;
-        }
-        error = null;
-        return true;
-    }
+			{
+				error = "path must not traverse symlinked directories";
+				return false;
+			}
+			dir = dir.Parent;
+		}
+		error = null;
+		return true;
+	}
 
-    /// <summary>
-    /// Validates that <paramref name="file"/> is not a symlink and that no ancestor directory
-    /// between <paramref name="file"/> and <paramref name="docRoot"/> is a symlink or hidden
-    /// (unless its name is present in <paramref name="allowedHiddenFolderNames"/>).
-    /// Returns true if access is valid; false with a non-null <paramref name="error"/> describing the violation.
-    /// </summary>
-    public static bool TryValidateSymlinkAccess(
-        this IFileInfo file,
-        IDirectoryInfo docRoot,
-        IReadOnlySet<string>? allowedHiddenFolderNames,
-        [NotNullWhen(false)] out string? error)
-    {
+	/// <summary>
+	/// Validates that <paramref name="file"/> is not a symlink and that no ancestor directory
+	/// between <paramref name="file"/> and <paramref name="docRoot"/> is a symlink or hidden
+	/// (unless its name is present in <paramref name="allowedHiddenFolderNames"/>).
+	/// Returns true if access is valid; false with a non-null <paramref name="error"/> describing the violation.
+	/// </summary>
+	public static bool TryValidateSymlinkAccess(
+		this IFileInfo file,
+		IDirectoryInfo docRoot,
+		IReadOnlySet<string>? allowedHiddenFolderNames,
+		[NotNullWhen(false)] out string? error
+	)
+	{
 #if NET6_0_OR_GREATER
         if (file is { Exists: true, LinkTarget: not null })
 #else
-        if (file.Exists && file.FileSystem.FileInfo.New(file.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+		if (file.Exists && file.FileSystem.FileInfo.New(file.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
-        {
-            error = "path must not point to a symlink";
-            return false;
-        }
+		{
+			error = "path must not point to a symlink";
+			return false;
+		}
 
-        var cmp = FileSystemPlatform.IsCaseSensitiveFileSystem
-            ? StringComparison.Ordinal
-            : StringComparison.OrdinalIgnoreCase;
+		var cmp = FileSystemPlatform.IsCaseSensitiveFileSystem ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
-        var dir = file.Directory;
-        while (dir != null && !string.Equals(dir.FullName, docRoot.FullName, cmp))
-        {
-            if (dir.Name.StartsWith(".") && (allowedHiddenFolderNames is null || !allowedHiddenFolderNames.Contains(dir.Name)))
-            {
-                error = "path must not traverse hidden directories";
-                return false;
-            }
+		var dir = file.Directory;
+		while (dir != null && !string.Equals(dir.FullName, docRoot.FullName, cmp))
+		{
+			if (dir.Name.StartsWith(".") && (allowedHiddenFolderNames is null || !allowedHiddenFolderNames.Contains(dir.Name)))
+			{
+				error = "path must not traverse hidden directories";
+				return false;
+			}
 #if NET6_0_OR_GREATER
             if (dir is { Exists: true, LinkTarget: not null })
 #else
-            if (dir.Exists && dir.FileSystem.DirectoryInfo.New(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
+			if (dir.Exists && dir.FileSystem.DirectoryInfo.New(dir.FullName).Attributes.HasFlag(FileAttributes.ReparsePoint))
 #endif
-            {
-                error = "path must not traverse symlinked directories";
-                return false;
-            }
-            dir = dir.Parent;
-        }
-        error = null;
-        return true;
-    }
+			{
+				error = "path must not traverse symlinked directories";
+				return false;
+			}
+			dir = dir.Parent;
+		}
+		error = null;
+		return true;
+	}
 }

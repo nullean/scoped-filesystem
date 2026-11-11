@@ -19,31 +19,17 @@ internal class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, ValidationCo
 {
 	public IFileSystem FileSystem => innerFs;
 
-	private void ValidateSelf() =>
-		PathValidator.ValidatePath(inner.FullName, ctx, innerFs);
+	private void ValidateSelf() => PathValidator.ValidatePath(inner.FullName, ctx, innerFs);
 
-	private void ValidateDest(string path) =>
-		PathValidator.ValidatePath(path, ctx, innerFs);
+	private void ValidateDest(string path) => PathValidator.ValidatePath(path, ctx, innerFs);
 
 	// ── IFileSystemInfo pass-through ─────────────────────────────────────────
 
-	public FileAttributes Attributes
-	{
-		get => inner.Attributes;
-		set => inner.Attributes = value;
-	}
+	public FileAttributes Attributes { get => inner.Attributes; set => inner.Attributes = value; }
 
-	public DateTime CreationTime
-	{
-		get => inner.CreationTime;
-		set => inner.CreationTime = value;
-	}
+	public DateTime CreationTime { get => inner.CreationTime; set => inner.CreationTime = value; }
 
-	public DateTime CreationTimeUtc
-	{
-		get => inner.CreationTimeUtc;
-		set => inner.CreationTimeUtc = value;
-	}
+	public DateTime CreationTimeUtc { get => inner.CreationTimeUtc; set => inner.CreationTimeUtc = value; }
 
 	public bool Exists => inner.Exists;
 
@@ -51,29 +37,13 @@ internal class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, ValidationCo
 
 	public string FullName => inner.FullName;
 
-	public DateTime LastAccessTime
-	{
-		get => inner.LastAccessTime;
-		set => inner.LastAccessTime = value;
-	}
+	public DateTime LastAccessTime { get => inner.LastAccessTime; set => inner.LastAccessTime = value; }
 
-	public DateTime LastAccessTimeUtc
-	{
-		get => inner.LastAccessTimeUtc;
-		set => inner.LastAccessTimeUtc = value;
-	}
+	public DateTime LastAccessTimeUtc { get => inner.LastAccessTimeUtc; set => inner.LastAccessTimeUtc = value; }
 
-	public DateTime LastWriteTime
-	{
-		get => inner.LastWriteTime;
-		set => inner.LastWriteTime = value;
-	}
+	public DateTime LastWriteTime { get => inner.LastWriteTime; set => inner.LastWriteTime = value; }
 
-	public DateTime LastWriteTimeUtc
-	{
-		get => inner.LastWriteTimeUtc;
-		set => inner.LastWriteTimeUtc = value;
-	}
+	public DateTime LastWriteTimeUtc { get => inner.LastWriteTimeUtc; set => inner.LastWriteTimeUtc = value; }
 
 #if NET6_0_OR_GREATER
 	public string? LinkTarget => inner.LinkTarget;
@@ -116,11 +86,7 @@ internal class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, ValidationCo
 
 	public string? DirectoryName => inner.DirectoryName;
 
-	public bool IsReadOnly
-	{
-		get => inner.IsReadOnly;
-		set => inner.IsReadOnly = value;
-	}
+	public bool IsReadOnly { get => inner.IsReadOnly; set => inner.IsReadOnly = value; }
 
 	public long Length => inner.Length;
 

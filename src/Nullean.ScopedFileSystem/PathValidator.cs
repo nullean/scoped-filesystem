@@ -12,8 +12,7 @@ namespace Nullean.ScopedFileSystem;
 /// <summary>Shared path validation logic for scope, symlink, and hidden-path enforcement.</summary>
 internal static class PathValidator
 {
-	private static StringComparison Comparison =>
-		FileSystemPlatform.IsCaseSensitiveFileSystem ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+	private static StringComparison Comparison => FileSystemPlatform.IsCaseSensitiveFileSystem ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
 	/// <summary>
 	/// Verifies that no root in <paramref name="normalizedRoots"/> is an ancestor of another.
@@ -28,16 +27,17 @@ internal static class PathValidator
 	internal static void ValidateRootsAreDisjoint(IReadOnlyList<string> normalizedRoots, IFileSystem inner)
 	{
 		for (var i = 0; i < normalizedRoots.Count; i++)
-		for (var j = i + 1; j < normalizedRoots.Count; j++)
-		{
-			var a = normalizedRoots[i];
-			var b = normalizedRoots[j];
-			if (IsStrictAncestorOf(a, b, inner) || IsStrictAncestorOf(b, a, inner))
-				throw new ArgumentException(
-					$"Scope roots must be disjoint: '{a}' is an ancestor of '{b}' (or vice versa). " +
-					"No scope root may be a parent or child of another scope root.",
-					nameof(normalizedRoots));
-		}
+			for (var j = i + 1; j < normalizedRoots.Count; j++)
+			{
+				var a = normalizedRoots[i];
+				var b = normalizedRoots[j];
+				if (IsStrictAncestorOf(a, b, inner) || IsStrictAncestorOf(b, a, inner))
+					throw new ArgumentException(
+						$"Scope roots must be disjoint: '{a}' is an ancestor of '{b}' (or vice versa). " +
+							"No scope root may be a parent or child of another scope root.",
+						nameof(normalizedRoots)
+					);
+			}
 	}
 
 	/// <summary>
@@ -58,8 +58,9 @@ internal static class PathValidator
 	internal static bool IsInScope(string path, ValidationContext ctx, IFileSystem inner)
 	{
 		var fullPath = inner.Path.GetFullPath(path);
-		return ctx.NormalizedRoots.Any(root => IsWithinRoot(fullPath, root, inner))
-			|| ctx.ResolvedSpecialFolderPaths.Any(sf => IsWithinRoot(fullPath, sf, inner));
+		return ctx.NormalizedRoots.Any(root => IsWithinRoot(fullPath, root, inner)) || ctx.ResolvedSpecialFolderPaths.Any(
+			sf => IsWithinRoot(fullPath, sf, inner)
+		);
 	}
 
 	/// <summary>
@@ -83,12 +84,11 @@ internal static class PathValidator
 
 		// Hidden directory name check on the target directory itself
 		var dirName = inner.Path.GetFileName(fullPath);
-		if (!string.IsNullOrEmpty(dirName)
-			&& dirName.StartsWith(".")
-			&& !ctx.AllowedHiddenFolderNames.Contains(dirName))
+		if (!string.IsNullOrEmpty(dirName) && dirName.StartsWith(".") && !ctx.AllowedHiddenFolderNames.Contains(dirName))
 			throw new ScopedFileSystemException(
 				$"Access denied: '{dirName}' is a hidden directory. " +
-				$"Add '{dirName}' to {nameof(ScopedFileSystemOptions.AllowedHiddenFolderNames)} to permit access.");
+					$"Add '{dirName}' to {nameof(ScopedFileSystemOptions.AllowedHiddenFolderNames)} to permit access."
+			);
 
 		ValidateDirectoryAncestors(fullPath, matchedRoot, ctx.AllowedHiddenFolderNames, inner);
 	}
@@ -118,12 +118,11 @@ internal static class PathValidator
 
 		// Hidden file check: block files whose own name starts with '.' unless explicitly allowed
 		var fileName = inner.Path.GetFileName(fullPath);
-		if (!string.IsNullOrEmpty(fileName)
-			&& fileName.StartsWith(".")
-			&& !ctx.AllowedHiddenFileNames.Contains(fileName))
+		if (!string.IsNullOrEmpty(fileName) && fileName.StartsWith(".") && !ctx.AllowedHiddenFileNames.Contains(fileName))
 			throw new ScopedFileSystemException(
 				$"Access denied: '{fileName}' is a hidden file. " +
-				$"Add '{fileName}' to {nameof(ScopedFileSystemOptions.AllowedHiddenFileNames)} to permit access.");
+					$"Add '{fileName}' to {nameof(ScopedFileSystemOptions.AllowedHiddenFileNames)} to permit access."
+			);
 
 		ValidateAncestors(fullPath, matchedRoot, ctx.AllowedHiddenFolderNames, inner);
 	}
@@ -171,11 +170,7 @@ internal static class PathValidator
 		return false;
 	}
 
-	private static void ValidateDirectoryAncestors(
-		string fullPath,
-		string scopeRoot,
-		IReadOnlySet<string> allowedHiddenFolderNames,
-		IFileSystem inner)
+	private static void ValidateDirectoryAncestors(string fullPath, string scopeRoot, IReadOnlySet<string> allowedHiddenFolderNames, IFileSystem inner)
 	{
 		var dirInfo = inner.DirectoryInfo.New(fullPath);
 		var rootInfo = inner.DirectoryInfo.New(scopeRoot);
@@ -189,11 +184,7 @@ internal static class PathValidator
 	/// <paramref name="allowedHiddenFolderNames"/>), using
 	/// <see cref="FileSystemExtensions.TryValidateSymlinkAccess"/>.
 	/// </summary>
-	private static void ValidateAncestors(
-		string fullPath,
-		string scopeRoot,
-		IReadOnlySet<string> allowedHiddenFolderNames,
-		IFileSystem inner)
+	private static void ValidateAncestors(string fullPath, string scopeRoot, IReadOnlySet<string> allowedHiddenFolderNames, IFileSystem inner)
 	{
 		var fileInfo = inner.FileInfo.New(fullPath);
 		var rootInfo = inner.DirectoryInfo.New(scopeRoot);

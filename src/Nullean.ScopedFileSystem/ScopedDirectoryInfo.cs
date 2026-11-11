@@ -21,31 +21,17 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 {
 	public IFileSystem FileSystem => innerFs;
 
-	private void ValidateSelf() =>
-		PathValidator.ValidateDirectoryPath(inner.FullName, ctx, innerFs);
+	private void ValidateSelf() => PathValidator.ValidateDirectoryPath(inner.FullName, ctx, innerFs);
 
-	private void ValidateDest(string path) =>
-		PathValidator.ValidateDirectoryPath(path, ctx, innerFs);
+	private void ValidateDest(string path) => PathValidator.ValidateDirectoryPath(path, ctx, innerFs);
 
 	// ── IFileSystemInfo ──────────────────────────────────────────────────────
 
-	public FileAttributes Attributes
-	{
-		get => inner.Attributes;
-		set => inner.Attributes = value;
-	}
+	public FileAttributes Attributes { get => inner.Attributes; set => inner.Attributes = value; }
 
-	public DateTime CreationTime
-	{
-		get => inner.CreationTime;
-		set => inner.CreationTime = value;
-	}
+	public DateTime CreationTime { get => inner.CreationTime; set => inner.CreationTime = value; }
 
-	public DateTime CreationTimeUtc
-	{
-		get => inner.CreationTimeUtc;
-		set => inner.CreationTimeUtc = value;
-	}
+	public DateTime CreationTimeUtc { get => inner.CreationTimeUtc; set => inner.CreationTimeUtc = value; }
 
 	public bool Exists => inner.Exists;
 
@@ -53,29 +39,13 @@ internal class ScopedDirectoryInfo(IDirectoryInfo inner, IFileSystem innerFs, Va
 
 	public string FullName => inner.FullName;
 
-	public DateTime LastAccessTime
-	{
-		get => inner.LastAccessTime;
-		set => inner.LastAccessTime = value;
-	}
+	public DateTime LastAccessTime { get => inner.LastAccessTime; set => inner.LastAccessTime = value; }
 
-	public DateTime LastAccessTimeUtc
-	{
-		get => inner.LastAccessTimeUtc;
-		set => inner.LastAccessTimeUtc = value;
-	}
+	public DateTime LastAccessTimeUtc { get => inner.LastAccessTimeUtc; set => inner.LastAccessTimeUtc = value; }
 
-	public DateTime LastWriteTime
-	{
-		get => inner.LastWriteTime;
-		set => inner.LastWriteTime = value;
-	}
+	public DateTime LastWriteTime { get => inner.LastWriteTime; set => inner.LastWriteTime = value; }
 
-	public DateTime LastWriteTimeUtc
-	{
-		get => inner.LastWriteTimeUtc;
-		set => inner.LastWriteTimeUtc = value;
-	}
+	public DateTime LastWriteTimeUtc { get => inner.LastWriteTimeUtc; set => inner.LastWriteTimeUtc = value; }
 
 #if NET6_0_OR_GREATER
 	public string? LinkTarget => inner.LinkTarget;

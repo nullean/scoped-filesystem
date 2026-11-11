@@ -26,9 +26,7 @@ internal sealed record ValidationContext(
 	/// </summary>
 	internal static IReadOnlySet<string> ToAllowSet(IReadOnlyCollection<string> names)
 	{
-		var comparer = FileSystemPlatform.IsCaseSensitiveFileSystem
-			? StringComparer.Ordinal
-			: StringComparer.OrdinalIgnoreCase;
+		var comparer = FileSystemPlatform.IsCaseSensitiveFileSystem ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase;
 #if NETSTANDARD2_0 || NETSTANDARD2_1
 		return new ReadOnlySetWrapper<string>(names, comparer);
 #else
