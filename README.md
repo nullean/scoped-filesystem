@@ -1,10 +1,65 @@
-# Nullean.ScopedFileSystem
+<p align="center">
+  <a href="https://github.com/nullean">
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/nullean/nullean.github.io/main/assets/nullean-lockup-light-544x192.png">
+      <img src="https://raw.githubusercontent.com/nullean/nullean.github.io/main/assets/nullean-lockup-544x192.png" alt="nullean" width="272" height="96">
+    </picture>
+  </a>
+</p>
 
-A `System.IO.Abstractions` `IFileSystem` decorator that restricts file **read and write** operations to one or more configured scope root directories and rejects symbolic links.
+<p align="center">A <code>System.IO.Abstractions</code> <code>IFileSystem</code> decorator that restricts file reads and writes to one or more scope root directories and rejects symbolic links, hidden files and path traversal.</p>
 
-## What it does
+<p align="center">
+  <a href="https://www.nuget.org/packages/Nullean.ScopedFileSystem"><img src="https://img.shields.io/nuget/v/Nullean.ScopedFileSystem?style=flat-square" alt="NuGet"></a>
+  <a href="https://github.com/nullean/scoped-filesystem/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/nullean/scoped-filesystem/ci.yml?branch=main&style=flat-square&label=ci" alt="CI"></a>
+</p>
 
-`ScopedFileSystem` wraps any `IFileSystem` and enforces these rules on every file and directory operation:
+```csharp
+using System.IO.Abstractions;
+using Nullean.ScopedFileSystem;
+
+IFileSystem scoped = new ScopedFileSystem("/var/www/docs");
+
+var content = scoped.File.ReadAllText("/var/www/docs/page.md");      // OK: within scope
+scoped.File.WriteAllText("/var/www/docs/output.md", content);         // OK: write within scope
+
+bool exists = scoped.File.Exists("/etc/passwd");                      // false, no exception
+
+scoped.File.ReadAllText("/etc/passwd");                               // ScopedFileSystemException: outside scope
+scoped.File.ReadAllText("/var/www/docs/../../../etc/passwd");         // ScopedFileSystemException: .. is resolved first
+scoped.File.ReadAllText("/var/www/docs/.env");                        // ScopedFileSystemException: hidden file
+scoped.File.ReadAllText("/var/www/docs/link-to-secret");              // ScopedFileSystemException: symbolic link
+```
+
+## Install
+
+```sh
+dotnet add package Nullean.ScopedFileSystem
+```
+
+Targets .NET Standard 2.0 and 2.1, .NET 9 and .NET 10; trimming- and AOT-safe on .NET 9 and later.
+
+## Quick start
+
+Wrap any `IFileSystem` (the real one, or a `MockFileSystem` in tests) and configure what else is allowed:
+
+```csharp
+using System.IO.Abstractions;
+using Nullean.ScopedFileSystem;
+
+IFileSystem inner = new FileSystem();   // or a MockFileSystem in tests
+
+IFileSystem scoped = new ScopedFileSystem(inner, new ScopedFileSystemOptions("/var/www/docs", "/var/www/data")
+{
+	AllowedHiddenFolderNames = [".git"],
+	AllowedHiddenFileNames = [".gitkeep"],
+	AllowedSpecialFolders = AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData,
+});
+
+scoped.File.WriteAllText(Path.Combine(Path.GetTempPath(), "cache.txt"), "ok");   // OK: temp is allowed
+```
+
+`ScopedFileSystem` enforces these rules on every file and directory operation:
 
 | Rule | Detail |
 |------|--------|
@@ -16,49 +71,7 @@ A `System.IO.Abstractions` `IFileSystem` decorator that restricts file **read an
 
 Any violation throws `ScopedFileSystemException` (extends `SecurityException`).
 
-## Usage
-
-```csharp
-using System.IO.Abstractions;
-using Nullean.ScopedFileSystem;
-
-// Convenience: single root, real filesystem
-IFileSystem scoped = new ScopedFileSystem("/var/www/docs");
-
-// Convenience: custom inner filesystem (e.g. MockFileSystem in tests)
-IFileSystem scoped = new ScopedFileSystem(inner, "/var/www/docs");
-
-// Full control via ScopedFileSystemOptions
-IFileSystem scoped = new ScopedFileSystem(inner, new ScopedFileSystemOptions("/var/www/docs")
-{
-    AllowedHiddenFolderNames = [".git"],
-    AllowedHiddenFileNames   = [".gitkeep"],
-    AllowedSpecialFolders    = AllowedSpecialFolder.Temp | AllowedSpecialFolder.ApplicationData,
-});
-```
-
-```csharp
-// OK — within scope
-var content = scoped.File.ReadAllText("/var/www/docs/page.md");
-
-// OK — write within scope
-scoped.File.WriteAllText("/var/www/docs/output.md", content);
-
-// Throws ScopedFileSystemException — outside scope
-scoped.File.ReadAllText("/etc/passwd");
-
-// Throws ScopedFileSystemException — hidden file (.env)
-scoped.File.ReadAllText("/var/www/docs/.env");
-
-// Throws ScopedFileSystemException — hidden ancestor directory (.hidden)
-scoped.File.ReadAllText("/var/www/docs/.hidden/secret.txt");
-
-// Returns false — no exception
-bool exists = scoped.File.Exists("/etc/passwd");
-
-// Throws ScopedFileSystemException — symlink
-scoped.File.ReadAllText("/var/www/docs/link-to-secret");
-```
+Any violation throws `ScopedFileSystemException` (extends `SecurityException`).
 
 ## Multiple roots
 
@@ -143,16 +156,10 @@ All paths are resolved via `IPath.GetFullPath` before any check. This means trav
 - **Case sensitivity**: Path comparison is case-sensitive on Linux, case-insensitive on Windows and macOS.
 - **Separator normalisation**: Both `/` and `\` separators are handled correctly on all platforms.
 
-## Projects
+## Learn more
 
-| Project | Description |
-|---------|-------------|
-| `src/Nullean.ScopedFileSystem` | Library |
-| `tests/Nullean.ScopedFileSystem.Tests` | xUnit test suite using `MockFileSystem` |
+- [Releases](https://github.com/nullean/scoped-filesystem/releases)
+- [Contributing](https://github.com/nullean/.github/blob/main/CONTRIBUTING.md); `mise run test` runs the xUnit suite
+  (on `MockFileSystem`), `mise run pack` packs and validates the package.
 
-## Building
-
-```bash
-dotnet build
-dotnet test
-```
+MIT licensed. Copyright Nullean and contributors.

@@ -22,14 +22,6 @@
     <EnableTrimAnalyzer Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</EnableTrimAnalyzer>
   </PropertyGroup>
 
-  <!-- the repository README is this package's README; Directory.Build.props only packs one next to the project -->
-  <PropertyGroup>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="System.IO.Abstractions" />
   </ItemGroup>
