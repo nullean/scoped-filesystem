@@ -1,18 +1,19 @@
 module Targets
 
-open Argu
 open System
 open System.IO
-open Bullseye
-open CommandLine
-open Fake.Tools.Git
 open ProcNet
 
 
-let exec binary args =
+let private exec binary args =
     Proc.Exec (binary, args |> List.toArray)
 
 let private restoreTools = lazy(exec "dotnet" ["tool"; "restore"])
+let private currentSha =
+    lazy(
+        let r = Proc.Start("git", "rev-parse", "HEAD")
+        (r.ConsoleOut |> Seq.find (fun l -> not l.Error)).Line.Trim()
+    )
 let private currentVersion =
     lazy(
         restoreTools.Value |> ignore
@@ -24,40 +25,40 @@ let private currentVersionInformational =
     lazy(
         match Paths.IncludeGitHashInInformational with
         | false -> currentVersion.Value
-        | true -> sprintf "%s+%s" currentVersion.Value (Information.getCurrentSHA1( "."))
+        | true -> sprintf "%s+%s" currentVersion.Value currentSha.Value
     )
 
-let private clean (arguments:ParseResults<Arguments>) =
+let clean () =
     if (Paths.Output.Exists) then Paths.Output.Delete (true)
     // clean every project but this build itself: `dotnet clean` on the solution would delete the assemblies the
-    // running build still loads lazily (Fake, Proc) and fail the next target
+    // running build still loads lazily and fail the next target
     ["src"; "tests"]
     |> Seq.collect (fun d -> Directory.EnumerateFiles(d, "*.?sproj", SearchOption.AllDirectories))
     |> Seq.iter (fun p -> exec "dotnet" ["clean"; p; "-c"; "Release"; "-v"; "q"] |> ignore)
 
-let private build (arguments:ParseResults<Arguments>) = exec "dotnet" ["build"; "-c"; "Release"] |> ignore
+let build () = exec "dotnet" ["build"; "-c"; "Release"] |> ignore
 
-let private test (arguments:ParseResults<Arguments>) =
+let test () =
     exec "dotnet" ["test"; "-c"; "RELEASE"; "--logger:GithubActions"; "--logger:pretty"] |> ignore
 
-let private generatePackages (arguments:ParseResults<Arguments>) =
+let generatePackages () =
     let output = Paths.RootRelative Paths.Output.FullName
     exec "dotnet" ["pack"; "-c"; "Release"; "-o"; output] |> ignore
 
-let private validatePackages (arguments:ParseResults<Arguments>) =
+let validatePackages () =
     let output = Paths.RootRelative <| Paths.Output.FullName
     let nugetPackages =
         Paths.Output.GetFiles("*.nupkg") |> Seq.sortByDescending(fun f -> f.CreationTimeUtc)
         |> Seq.map (fun p -> Paths.RootRelative p.FullName)
 
     let jenkinsOnWindowsArgs =
-        if Fake.Core.Environment.hasEnvironVar "JENKINS_URL" && Fake.Core.Environment.isWindows then ["-r"; "true"] else []
+        if not (String.IsNullOrEmpty(Environment.GetEnvironmentVariable "JENKINS_URL")) && OperatingSystem.IsWindows() then ["-r"; "true"] else []
 
     let args = ["-v"; currentVersionInformational.Value; "-k"; Paths.SignKey; "-t"; output] @ jenkinsOnWindowsArgs
     nugetPackages |> Seq.iter (fun p -> exec "dotnet" (["nupkg-validator"; p] @ args) |> ignore)
 
 
-let private generateApiChanges (arguments:ParseResults<Arguments>) =
+let generateApiChanges () =
     let output = Paths.RootRelative <| Paths.Output.FullName
     let currentVersion = currentVersion.Value
     let nugetPackages =
@@ -78,34 +79,3 @@ let private generateApiChanges (arguments:ParseResults<Arguments>) =
 
         exec "dotnet" args |> ignore
     )
-
-let Setup (parsed:ParseResults<Arguments>) (subCommand:Arguments) =
-    let step (name:string) action = Targets.Target(name, new Action(fun _ -> action(parsed)))
-
-    let cmd (name:string) commandsBefore steps action =
-        let singleTarget = (parsed.TryGetResult SingleTarget |> Option.defaultValue false)
-        let deps =
-            match (singleTarget, commandsBefore) with
-            | (true, _) -> []
-            | (_, Some d) -> d
-            | _ -> []
-        let steps = steps |> Option.defaultValue []
-        Targets.Target(name, deps @ steps, Action(action))
-
-    step Clean.Name clean
-    cmd Build.Name None (Some [Clean.Name]) <| fun _ -> build parsed
-
-    cmd Test.Name (Some [Build.Name;]) None <| fun _ -> test parsed
-
-    cmd Pack.Name
-        (Some [Build.Name;])
-        (Some [GeneratePackages.Name; ValidatePackages.Name; GenerateApiChanges.Name])
-        ignore
-    cmd Ci.Name
-        (Some [Test.Name;])
-        (Some [GeneratePackages.Name; ValidatePackages.Name; GenerateApiChanges.Name])
-        ignore
-
-    step GeneratePackages.Name generatePackages
-    step ValidatePackages.Name validatePackages
-    step GenerateApiChanges.Name generateApiChanges
