@@ -8,9 +8,9 @@ Violations throw `ScopedFileSystemException`.
 
 | Path | What |
 |---|---|
-| `src/Nullean.ScopedFileSystem` | the library (netstandard2.0, netstandard2.1, net9.0, net10.0), strong-named |
+| `src/Nullean.ScopedFileSystem` | the library (netstandard2.0, netstandard2.1, net10.0, net11.0), strong-named |
 | `src/Nullean.ScopedFileSystem/skills` | the agent skill packed into the package (`skills/scoped-filesystem/SKILL.md`) |
-| `tests/Nullean.ScopedFileSystem.Tests` | xUnit tests, on net10.0 |
+| `tests/Nullean.ScopedFileSystem.Tests` | xUnit tests, on net10.0 and net11.0 |
 | `build/scripts` | the F# build ([Nullean.Make.Fs](https://www.nuget.org/packages/Nullean.Make.Fs), net11.0) the `mise` tasks call |
 | `build/keys` | the strong-name key pair |
 

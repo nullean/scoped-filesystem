@@ -24,6 +24,6 @@
   <ItemGroup>
     <!-- Nullean.Make.Fs needs FSharp.Core 11.0.100 or later; it brings Proc and Proc.Fs -->
     <PackageVersion Include="FSharp.Core" Version="11.0.101" />
-    <PackageVersion Include="Nullean.Make.Fs" Version="0.28.0" />
+    <PackageVersion Include="Nullean.Make.Fs" Version="0.30.0" />
   </ItemGroup>
 </Project>
