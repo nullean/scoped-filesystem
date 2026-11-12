@@ -48,8 +48,8 @@ let main argv =
               for project in projectsToClean () do
                   sh $"dotnet clean {project} -c Release -v q" }
         | Build -> command {
-              composes [Clean]
-              executes (shell { sh $"dotnet build -c Release" }) }
+              composes [Clean] }
+                   |> executes { sh $"dotnet build -c Release" }
         | Test -> target [Build] { sh $"dotnet test -c RELEASE --logger:GithubActions --logger:pretty" }
         | Pack -> command { requires [Build]; composes [GeneratePackages; ValidatePackages; GenerateApiChanges] }
         | Ci -> command { requires [Test]; composes [GeneratePackages; ValidatePackages; GenerateApiChanges] }
