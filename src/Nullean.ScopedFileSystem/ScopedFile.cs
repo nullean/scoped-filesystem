@@ -343,6 +343,18 @@ internal class ScopedFile(IFile inner, IFileSystem innerFs, ValidationContext ct
 		return inner.Create(path, bufferSize, options);
 	}
 
+#if NET11_0_OR_GREATER
+	// Both ends are checked: the link puts the target's content at a second path.
+	public IFileSystemInfo CreateHardLink(string path, string pathToTarget)
+	{
+		Validate(path);
+		Validate(pathToTarget);
+		return inner.CreateHardLink(path, pathToTarget);
+	}
+
+	public SafeFileHandle OpenNullHandle() => inner.OpenNullHandle();
+#endif
+
 #if NET6_0_OR_GREATER
 	public IFileSystemInfo CreateSymbolicLink(string path, string pathToTarget)
 	{

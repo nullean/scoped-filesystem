@@ -59,6 +59,15 @@ internal class ScopedFileInfo(IFileInfo inner, IFileSystem innerFs, ValidationCo
 	}
 #endif
 
+#if NET11_0_OR_GREATER
+	public void CreateAsHardLink(string pathToTarget)
+	{
+		ValidateSelf();
+		ValidateDest(pathToTarget);
+		inner.CreateAsHardLink(pathToTarget);
+	}
+#endif
+
 #if NET6_0_OR_GREATER
 	public void CreateAsSymbolicLink(string pathToTarget)
 	{
