@@ -14,7 +14,7 @@
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
-    <PackageVersion Include="Nullean.VsTest.Pretty.TestLogger" Version="0.10.1" />
+    <PackageVersion Include="Nullean.VsTest.Pretty.TestLogger" Version="0.11.0" />
     <PackageVersion Include="System.IO.Abstractions.TestingHelpers" Version="23.0.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
@@ -24,6 +24,6 @@
   <ItemGroup>
     <!-- Nullean.Make.Fs needs FSharp.Core 11.0.100 or later; it brings Proc and Proc.Fs -->
     <PackageVersion Include="FSharp.Core" Version="11.0.101" />
-    <PackageVersion Include="Nullean.Make.Fs" Version="0.27.2" />
+    <PackageVersion Include="Nullean.Make.Fs" Version="0.28.0" />
   </ItemGroup>
 </Project>
