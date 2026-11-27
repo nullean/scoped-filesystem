@@ -11,7 +11,7 @@ Violations throw `ScopedFileSystemException`.
 | `src/Nullean.ScopedFileSystem` | the library (netstandard2.0, netstandard2.1, net10.0, net11.0), strong-named |
 | `src/Nullean.ScopedFileSystem/skills` | the agent skill packed into the package (`skills/scoped-filesystem/SKILL.md`) |
 | `tests/Nullean.ScopedFileSystem.Tests` | xUnit tests, on net10.0 and net11.0 |
-| `build/scripts` | the F# build ([Nullean.Make.Fs](https://www.nuget.org/packages/Nullean.Make.Fs), net11.0) the `mise` tasks call |
+| `build/scripts` | the F# build ([Runna.Fs](https://www.nuget.org/packages/Runna.Fs), net11.0) the `mise` tasks call |
 | `build/keys` | the strong-name key pair |
 
 ## Commands
@@ -49,7 +49,7 @@ skills have the details. Every pull request carries exactly one release label. P
 - The packed skill is written from the code, and every snippet in it must compile: update it with the public API.
 - Package validation runs on pack. `CompatibilitySuppressions.xml` records the one known difference between target
   frameworks; do not add to it to silence a new break.
-- Build targets are Make.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
+- Build targets are Runna.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
   lines; values come from `text`/`lines` inside `shell { }`. Do not call the C# `ProcNet` API from the build.
 - Formatting is curb's, from `.editorconfig` (the nullean template, identical in every repo): run `mise run format`
   before committing C#. CI fails on drift. See the [format](.claude/skills/format/SKILL.md) skill.
